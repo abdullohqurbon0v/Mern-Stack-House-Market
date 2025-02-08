@@ -79,7 +79,7 @@ const SignInPage = () => {
     if (token) {
       router.push('/')
     }
-  }, [])
+  }, [router])
 
 
   return (

@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { format } from 'date-fns';
-import { Calendar as CalendarIcon, Home } from 'lucide-react';
+import { Calendar as CalendarIcon } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -34,11 +34,12 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import Image from 'next/image';
+import { House } from '@/types';
 
 const MainPage = () => {
   const router = useRouter();
   const [date, setDate] = useState<Date>();
-  const [data, setData] = useState<any[]>([]);
+  const [data, setData] = useState<House[]>([]);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -46,7 +47,7 @@ const MainPage = () => {
       router.push('/signin');
     }
 
-    // Example data - you can replace this with actual API data or other dynamic sources
+
     const fetchedData = [
       {
         id: 8237,
