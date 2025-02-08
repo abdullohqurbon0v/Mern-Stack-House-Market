@@ -51,7 +51,7 @@ const MainPage = () => {
     const fetchedData = [
       {
         id: 8237,
-        imageUrl: '/path-to-image1.jpg',
+        imageUrl: 'https://media.newhomeinc.com/348/2022/11/30/The-Apex-Georgian-Elevation-1.jpeg?width=1000&ois=0360179&fit=bounds&height=666',
         availabilityDate: '7.2.2025',
         repair: 'Евро ремонт',
         price: 400,
@@ -63,7 +63,7 @@ const MainPage = () => {
       },
       {
         id: 8236,
-        imageUrl: '/path-to-image2.jpg',
+        imageUrl: 'https://media.newhomeinc.com/348/2022/11/30/The-Apex-Georgian-Elevation-1.jpeg?width=1000&ois=0360179&fit=bounds&height=666',
         availabilityDate: '7.2.2025',
         repair: 'Евро ремонт',
         price: 1200,
