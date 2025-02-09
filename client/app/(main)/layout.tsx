@@ -91,7 +91,9 @@ const MainLayout = ({ children }: ChildProps) => {
     e.preventDefault()
     try {
       const res = await fetchData.post('/create-house', { repair, address, userViaOwner, owner, valute, landmark, district })
+      console.log(res)
     } catch (error) {
+      console.log(error)
       toast({
         title: "Ошибка",
         description: "Ошибка с сервером пожалуста попытайтесь заново"
@@ -110,7 +112,7 @@ const MainLayout = ({ children }: ChildProps) => {
     console.log(date)
     console.log(checkConditioner);
     console.log(files)
-
+    console.log(price)
   }
 
   return (
