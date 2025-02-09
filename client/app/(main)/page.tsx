@@ -14,10 +14,22 @@ import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrig
 import Image from 'next/image';
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
 
+interface IHouse {
+  id: number,
+  imageUrl: string,
+  availabilityDate: string,
+  repair: string,
+  price: number,
+  district: string,
+  rooms: number,
+  floor: number,
+  employee: string,
+  owner: string
+}
 const MainPage = () => {
   const router = useRouter();
   const [date, setDate] = useState<Date>(new Date())
-  const [data, setData] = useState<any[]>([]);
+  const [data, setData] = useState<IHouse[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
   const [totalItems, setTotalItems] = useState(0);
