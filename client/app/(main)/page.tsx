@@ -28,7 +28,7 @@ interface IHouse {
 }
 const MainPage = () => {
   const router = useRouter();
-  const [date, setDate] = useState<Date>(new Date())
+  const [date, setDate] = useState<Date>()
   const [data, setData] = useState<IHouse[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
@@ -151,6 +151,7 @@ const MainPage = () => {
                       <Calendar
                         mode='single'
                         selected={date}
+                        onSelect={setDate}
                         initialFocus
                       />
                     </PopoverContent>
