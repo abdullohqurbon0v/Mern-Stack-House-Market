@@ -23,7 +23,7 @@ app.post('/api/create-user', async (req, res) => {
   try {
     const { fullName, email, password } = req.body;
     if (!fullName || !email || !password) {
-      return res.status(400).json({ message: "Error: All fields are required" });
+      return res.status(400).json({ message: "Все поля нужно заполнить" });
     }
 
     const existingUser = await userModel.findOne({ email });
@@ -46,12 +46,12 @@ app.post('/api/login', async (req, res) => {
     const { email, password } = req.body;
 
     if (!email || !password) {
-      return res.status(400).json({ message: "Error: All fields are required" });
+      return res.status(400).json({ message: "Все поля нужно заполнить" });
     }
 
     const user = await userModel.findOne({ email });
     if (!user) {
-      return res.status(400).json({ message: "Manager with this email does not exist" });
+      return res.status(400).json({ message: "Мэнеджер с таким не найдет" });
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
