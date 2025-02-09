@@ -151,7 +151,6 @@ const MainPage = () => {
                       <Calendar
                         mode='single'
                         selected={date}
-                        onSelect={setDate}
                         initialFocus
                       />
                     </PopoverContent>
