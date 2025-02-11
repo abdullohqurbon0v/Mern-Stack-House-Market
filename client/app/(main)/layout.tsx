@@ -2,7 +2,7 @@
 import React, { ChangeEvent, FormEvent, useEffect, useState } from 'react';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import AppSidebar from '@/components/shared/navbar';
-import { ChildProps } from '@/types';
+import { ChildProps, IUser } from '@/types';
 import {
   NavigationMenu,
   NavigationMenuContent,
@@ -16,11 +16,7 @@ import { cn } from '@/lib/utils';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
+  Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
 import { CalendarIcon, Home, Plus } from 'lucide-react';
@@ -40,8 +36,20 @@ import { format } from 'date-fns';
 import { Calendar } from '@/components/ui/calendar';
 import { useToast } from '@/hooks/use-toast';
 import { fetchData } from '@/http/api';
+import { useRouter } from 'next/navigation';
+import axios from 'axios';
+
+
+
+const rayons = ['Bektemir', "Mirzo Ulug'bek", 'Sergeli', 'Shayxontohur', 'Chilonzor', 'Olmazor', 'Mirobod', 'Yashnobod', '']
+
 
 const MainLayout = ({ children }: ChildProps) => {
+  const router = useRouter()
+  const [user, setUser] = useState<IUser | null>(null)
+  const [users, setUsers] = useState<IUser[]>([])
+  const [filteredUsers, setFilteredUsers] = useState<IUser[]>([])
+  const [searchUsers, setSearchUsers] = useState<string>('')
   // SELECT VALUES
   const [repair, setRepair] = useState<string>('')
   const [address, setAddress] = useState<string>('')
@@ -68,10 +76,11 @@ const MainLayout = ({ children }: ChildProps) => {
   const [washingMaching, setWashingMachine] = useState<boolean>(false)
   const [prepayment, setPrepayment] = useState<boolean>(false)
   const [deposit, setDeposit] = useState<boolean>(false)
-  const [isMounted, setIsMounted] = useState(false);
+  const [isMounted, setIsMounted] = useState<boolean>(false);
 
   // FILES
   const [files, setFiles] = useState<File[]>([]);
+  const [loading, setLoading] = useState<boolean>(false)
   const { toast } = useToast()
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -82,38 +91,89 @@ const MainLayout = ({ children }: ChildProps) => {
   };
   useEffect(() => {
     setIsMounted(true);
+    const getUserInfo = async () => {
+      const res = await fetchData.get('/get-user-info')
+      console.log(res.data)
+      setUser(res.data.user)
+    }
+    getUserInfo()
   }, []);
+
+  const onLogout = () => {
+    localStorage.clear()
+    router.push('/signin')
+  }
 
   if (!isMounted) return null;
 
 
   const handleAddHome = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
+    e.preventDefault();
+    setLoading(true)
     try {
-      const res = await fetchData.post('/create-house', { repair, address, userViaOwner, owner, valute, landmark, district })
+      if (!repair || !address || !userViaOwner || !owner || !valute || !landmark || !district || !description || !square || !date || !floor || !rooms || !numberOfFloorOfTheBuildind || !price) {
+        setLoading(false)
+        return toast({
+          title: "Ошибка",
+          description: "Нужно ввести все данные !!",
+        })
+      }
+      const formData = new FormData();
+      formData.append("repair", repair);
+      formData.append("address", address);
+      formData.append("userViaOwner", userViaOwner);
+      formData.append("owner", owner);
+      formData.append("valute", valute);
+      formData.append("landmark", landmark);
+      formData.append("district", district);
+      formData.append("description", description);
+      formData.append("square", square.toString());
+      formData.append("date", date);
+      formData.append("floor", floor.toString());
+      formData.append("rooms", rooms.toString());
+      formData.append("numberOfFloorOfTheBuildind", numberOfFloorOfTheBuildind.toString());
+      formData.append("price", price.toString());
+      formData.append("checkConditioner", checkConditioner.toString());
+      formData.append("tv", tv.toString());
+      formData.append("washingMaching", washingMaching.toString());
+      formData.append("prepayment", prepayment.toString());
+      formData.append("deposit", deposit.toString());
+      if (files && files.length > 0) {
+        Array.from(files).forEach((file) => {
+          formData.append("files[]", file);
+        });
+      }
+      const res = await fetchData.post('/create-house', formData);
+
+      console.log(res);
+      setLoading(false)
+    } catch (error) {
+      console.error(error);
+      toast({
+        title: "Ошибка",
+        description: "Ошибка с сервером, пожалуйста, попытайтесь заново",
+      });
+      setLoading(false)
+    }
+  };
+
+  const handelChangeSearch = (e: ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value
+    setSearchUsers(value)
+    // const filter = users && users.
+  }
+
+  const handleOpenModal = async () => {
+    try {
+      const res = await fetchData.get('/get-all-users')
+      setUsers(res.data.users)
       console.log(res)
     } catch (error) {
       console.log(error)
-      toast({
-        title: "Ошибка",
-        description: "Ошибка с сервером пожалуста попытайтесь заново"
-      })
     }
-    console.log(repair)
-    console.log(userViaOwner)
-    console.log(owner)
-    console.log(district)
-    console.log(address)
-    console.log(landmark)
-    console.log(rooms)
-    console.log(floor)
-    console.log(numberOfFloorOfTheBuildind)
-    console.log(square)
-    console.log(date)
-    console.log(checkConditioner);
-    console.log(files)
-    console.log(price)
   }
+
+
 
   return (
     <div className="min-h-screen flex  ">
@@ -130,11 +190,11 @@ const MainLayout = ({ children }: ChildProps) => {
               <NavigationMenu>
                 <NavigationMenuList>
                   <NavigationMenuItem>
-                    <NavigationMenuTrigger className="border">Profile</NavigationMenuTrigger>
+                    <NavigationMenuTrigger className="border">{user && user.fullName}</NavigationMenuTrigger>
                     <NavigationMenuContent>
                       <div className='flex flex-col  '>
                         <button className='px-5 py-2 hover:bg-slate-200 transition-all'>Профиль</button>
-                        <button className='px-5 py-2 hover:bg-slate-200 transition-all'>Выйти</button>
+                        <button className='px-5 py-2 hover:bg-slate-200 transition-all' onClick={onLogout}>Выйти</button>
                       </div>
                     </NavigationMenuContent>
                   </NavigationMenuItem>
@@ -160,7 +220,7 @@ const MainLayout = ({ children }: ChildProps) => {
           </div>
         </div>
         <Dialog>
-          <DialogTrigger className="absolute left-[95%] top-[91%] border p-3 rounded-xl hover:bg-slate-900 transition-all z-50">
+          <DialogTrigger onClick={handleOpenModal} className="absolute left-[95%] top-[91%] border p-3 rounded-xl hover:bg-slate-900 transition-all z-50">
             <Plus />
           </DialogTrigger>
           <DialogContent>
@@ -190,9 +250,10 @@ const MainLayout = ({ children }: ChildProps) => {
                           </SelectTrigger>
                           <SelectContent>
                             <form className='flex flex-col space-y-3'>
-                              <Input type="text" placeholder="Введите адрес" />
-                              <SelectItem value="user1">Пользователь 1</SelectItem>
-                              <SelectItem value="user2">Пользователь 2</SelectItem>
+                              <Input type="text" placeholder="Введите адрес" value={searchUsers} onChange={(e) => handelChangeSearch(e)} />
+                              {users?.map(item => (
+                                <SelectItem key={item._id} value={item.fullName}>{item.fullName}</SelectItem>
+                              ))}
                             </form>
                           </SelectContent>
                         </Select>
@@ -363,7 +424,7 @@ const MainLayout = ({ children }: ChildProps) => {
                     </div>
                     <div className="flex justify-end space-x-2">
                       <Button variant="outline">Отмена</Button>
-                      <Button type="submit">Создать</Button>
+                      <Button type="submit">{loading ? 'Загрузка...' : 'Создать'}</Button>
                     </div>
                   </form>
                 </div>

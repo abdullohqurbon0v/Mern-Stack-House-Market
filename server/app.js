@@ -9,15 +9,26 @@ const userModel = require('./models/User');
 const UserDto = require('./dtos/user.dto');
 const cors = require('cors')
 const tokenValidation = require('./middlewares/auth');
+const FileService = require('./file')
+const cookieParser = require('cookie-parser')
+const fileUpload = require('express-fileupload')
+const bodyParser = require('body-parser');
+
 
 const app = express();
 const port = process.env.PORT || 4000;
 
+app.use(express.json())
+app.use(fileUpload({}))
 app.use(cors({
   origin: "*",
   methods: ['GET', 'POST', 'PUT', 'DELETE']
 }))
 app.use(express.json());
+app.use(cookieParser({}))
+app.use(express.static('static'))
+app.use(fileUpload({}))
+app.use(bodyParser.json())
 
 app.post('/api/create-user', async (req, res) => {
   try {
@@ -56,18 +67,31 @@ app.post('/api/login', async (req, res) => {
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
-      return res.status(400).json({ message: "Incorrect password" });
+      return res.status(400).json({ message: "Неправильный пароль" });
     }
 
     const userDTO = new UserDto(user);
     const accessToken = jwt.sign({ user: userDTO }, process.env.JWT_SECRET, { expiresIn: '1h' });
 
-    return res.status(200).json({ message: "Login successful", access_token: accessToken });
+    return res.status(200).json({ message: "Вошли в систему", access_token: accessToken });
   } catch (error) {
     console.error(error);
     return res.status(500).json({ message: "Error logging in. Please try again later" });
   }
 });
+
+app.get('/api/get-all-users', tokenValidation, async (req, res) => {
+  try {
+    const users = await userModel.find()
+    return res.status(200).json({
+      message: "Все пользователи найдены",
+      users,
+    })
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Error logging in. Please try again later" });
+  }
+})
 
 app.get('/api/get-user-info', tokenValidation, async (req, res) => {
   try {
@@ -85,57 +109,102 @@ app.get('/api/get-user-info', tokenValidation, async (req, res) => {
 
 app.post('/api/create-house', tokenValidation, async (req, res) => {
   try {
-    const { user } = req.user
-    const { rayon, address, landmark, informations, prepayment, price, depozit } = req.body;
+    const { user } = req.user;
+    const {
+      repair,
+      address,
+      userViaOwner,
+      owner,
+      valute,
+      landmark,
+      district,
+      description,
+      square,
+      date,
+      floor,
+      rooms,
+      numberOfFloorOfTheBuildind,
+      price,
+      checkConditioner,
+      tv,
+      washingMaching,
+      prepayment,
+      deposit,
+    } = req.body;
 
-    if (!rayon || !address || !landmark || !informations || !prepayment || !price || !depozit) {
-      return res.status(400).json({ message: "Error: All fields are required" });
+    if (!address || !landmark || !district || !description || !price) {
+      return res.status(400).json({ message: "Error: All required fields must be filled" });
     }
+    console.log()
 
+
+    let uploadedFiles = [];
+    if (req.files && req.files['files[]']) {
+      const files = Array.isArray(req.files['files[]']) ? req.files['files[]'] : [req.files['files[]']];
+      uploadedFiles = files.map(file => FileService.save(file));
+    }
     const allHouses = await House.find();
     const newId = allHouses.length + 1;
-
-    const infoDetails = informations.map(info => `• ${info.key}: ${info.value}`).join("\n");
-    console.log(infoDetails)
-
     const message = `
 ✨✨✨ СДАЁТСЯ ✨✨✨
 
-🏠 Район: ${rayon}
-📍 Адрес: ${address}
-📌 Ориентир: ${landmark}
+🆔 ID: ${newId}
 👤 Сотрудник: ${user.fullName}
 
+🏠 Район: ${district}
+📍 Адрес: ${address}
+📌 Ориентир: ${landmark}
+👤 Владелец: ${owner}
+
 Информация о квартире:
-${infoDetails}
+• Площадь: ${square} м²
+• Количество комнат: ${rooms}
+• Этаж: ${floor}/${numberOfFloorOfTheBuildind}
+• Ремонт: ${repair}
+• Описание: ${description}
+
+Удобства:
+• Кондиционер: ${checkConditioner ? 'Да' : 'Нет'}
+• Телевизор: ${tv ? 'Да' : 'Нет'}
+• Стиральная машина: ${washingMaching ? 'Да' : 'Нет'}
 
 Способы оплаты:
-💸 Предоплата: ${prepayment ? "да" : "нет"}
-💳 Депозит: ${informations.find(info => info.key === 'Депозит')?.value || "нет"}
-💰 Цена: $${price.toFixed(2)}
+💸 Предоплата: ${prepayment ? 'Да' : 'Нет'}
+💳 Депозит: ${deposit ? `Да` : 'Нет'}
+💰 Цена: ${price}${valute}
 
-📅 Время освобождения: ${informations.find(info => info.key === 'Время освобождения')?.value || "не указано"}
-📢 Имеются альтернативные варианты по всему городу.
-🔗 Переходите по ссылке: @joyestateuz
-🆔 ID: ${newId}
+📅 Дата: ${date || "Не указана"}
 `;
 
-    const messageId = await sendMessage(message);
-    console.log(messageId)
+    const messageId = await sendMessage(message, uploadedFiles);
 
-    await House.create({
+    const newHouse = await House.create({
       employee: user.id,
-      rayon,
       address,
       landmark,
-      informations,
-      prepayment,
-      price,
-      depozit,
+      district,
+      description,
+      square: Number(square),
+      date,
+      floor: Number(floor),
+      rooms: Number(rooms),
+      numberOfFloorOfTheBuildind: Number(numberOfFloorOfTheBuildind),
+      price: Number(price),
+      repair,
+      userViaOwner,
+      owner,
+      valute,
+      checkConditioner: Boolean(checkConditioner),
+      tv: Boolean(tv),
+      washingMaching: Boolean(washingMaching),
+      prepayment: Boolean(prepayment),
+      deposit: Boolean(deposit),
+      files: uploadedFiles,
       messageId,
-      id: newId
+      id: newId,
     });
-    return res.status(200).json({ message: "Message sent to channel" });
+
+    return res.status(200).json({ message: "House created successfully", house: newHouse });
   } catch (error) {
     console.error('Error:', error);
     return res.status(500).json({ message: "Something went wrong. Try again later." });
@@ -144,7 +213,7 @@ ${infoDetails}
 
 app.put('/api/edit-house/:id', tokenValidation, async (req, res) => {
   try {
-    const houseId = req.params.id;
+    const { houseId } = req.params
     console.log(houseId)
     const { user } = req.user;
     const { rayon, address, landmark, informations, prepayment, price, depozit } = req.body;
@@ -214,7 +283,7 @@ app.delete('/api/remove-house/:id', tokenValidation, async (req, res) => {
       return res.status(404).json({ message: "House not found" });
     }
 
-    return res.status(200).json({ message: "House removed successfully" });
+    return res.status(200).json({ message: "House removed successfully", post: find });
   } catch (error) {
     console.error('Error:', error);
     return res.status(500).json({ message: "Something went wrong. Try again later." });

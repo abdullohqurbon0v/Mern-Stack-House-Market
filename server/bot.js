@@ -3,21 +3,30 @@ const axios = require('axios');
 const botToken = process.env.BOT_TOKEN;
 const chatId = process.env.CHANNEL_ID;
 
-async function sendMessage(message) {
+async function sendMessage(message, images) {
   try {
-    const sendMessageUrl = `https://api.telegram.org/bot${botToken}/sendMessage`;
-    const response = await axios.post(sendMessageUrl, {
-      chat_id: chatId,
-      text: message,
-      parse_mode: 'HTML',
-    });
+    const sendMediaGroupUrl = `https://api.telegram.org/bot${botToken}/sendMediaGroup`;
 
-    return response.data.result.message_id;
+    const media = images.map((image, index) => ({
+      type: 'photo',
+      media: `https://0a9e-90-156-197-221.ngrok-free.app/${image}`,
+      caption: index === 0 ? message : undefined,
+      parse_mode: 'Markdown'
+    }));
+    console.log(media)
+
+    const response = await axios.post(sendMediaGroupUrl, {
+      chat_id: chatId,
+      media: media,
+    });
+    console.log('Media group sent:', response.data);
   } catch (error) {
-    console.error('Error sending message:', error.response?.data || error.message);
+    console.error('Error sending media group:', error.message);
     throw error;
   }
 }
+
+
 
 async function editMessage(newMessage, messageId) {
   try {

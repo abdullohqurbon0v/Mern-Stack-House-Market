@@ -3,9 +3,6 @@ import axios from 'axios'
 export const fetchData = axios.create({
   baseURL: "http://localhost:8080/api/",
   timeout: 10000,
-  headers: {
-    'Content-Type': 'application/json',
-  },
 })
 
 fetchData.interceptors.request.use(
@@ -27,7 +24,10 @@ fetchData.interceptors.response.use(
     return response
   },
   (error) => {
-    if (error.response?.status === 401) { }
+    if (error.response?.status === 401) {
+      localStorage.removeItem('token')
+      window.location.href = '/signin'
+    }
     return Promise.reject(error)
   }
 )
