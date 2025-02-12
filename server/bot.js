@@ -9,7 +9,7 @@ async function sendMessage(message, images) {
 
     const media = images.map((image, index) => ({
       type: "photo",
-      media: `https://1b9b-213-230-78-183.ngrok-free.app/${image}`,
+      media: `https://5fbf-213-230-78-183.ngrok-free.app/${image}`,
       caption: index === 0 ? message : undefined,
       parse_mode: "Markdown"
     }));
@@ -24,7 +24,7 @@ async function sendMessage(message, images) {
     console.log("Media group sent:", response.data);
   } catch (error) {
     console.error("Error sending media group:", error.message);
-    console.error(error.response?.data); // Выведет доп. информацию
+    console.error(error.response?.data);
     throw error;
   }
 }

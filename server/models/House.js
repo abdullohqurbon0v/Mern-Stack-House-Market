@@ -55,10 +55,6 @@ const HouseSchema = new Schema({
     type: String,
     required: false,
   },
-  owner: {
-    type: String,
-    required: false,
-  },
   valute: {
     type: String,
     required: true,

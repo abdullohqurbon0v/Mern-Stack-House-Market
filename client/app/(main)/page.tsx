@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { format } from 'date-fns';
-import { Calendar as CalendarIcon } from 'lucide-react';
+import { Calendar as CalendarIcon, Edit, Send } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
@@ -16,8 +16,11 @@ import { Pagination, PaginationContent, PaginationItem, PaginationLink, Paginati
 import { fetchData } from '@/http/api';
 import { IHouse } from '@/types';
 import { useHouseStore } from '@/store/houses';
+import { useUser } from '@/store/user';
+import moment from 'moment'
 
 const MainPage = () => {
+  const { user } = useUser()
   const { houses, setAllHouses } = useHouseStore()
   const router = useRouter();
   const [date, setDate] = useState<Date>()
@@ -39,10 +42,10 @@ const MainPage = () => {
       setTotalItems(response.data.data.length);
       console.log(data)
       setAllHouses(response.data.data)
-      setData(houses)
     }
     getHouses()
-  }, [router, currentPage, itemsPerPage]);
+    console.log("render")
+  }, [router, currentPage, itemsPerPage, setAllHouses]);
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -50,28 +53,39 @@ const MainPage = () => {
 
   const totalPages = Math.ceil(totalItems / itemsPerPage);
 
+  const getVisiblePages = (totalPages: number, currentPage: number) => {
+    let startPage = Math.max(1, currentPage - 1);
+    const endPage = Math.min(totalPages, startPage + 2);
+    if (endPage - startPage < 2) {
+      startPage = Math.max(1, endPage - 2);
+    }
+    return Array.from({ length: endPage - startPage + 1 }, (_, i) => startPage + i);
+  };
+
+
   return (
     <div className='flex flex-col space-y-2'>
       <div className='flex justify-between'>
         <div className='flex items-center space-x-5'>
           <Button color={''}>Очистить фильтр</Button>
-          <p>Интервал: 1 - 20</p>
-          <p>Всего: 7999</p>
+          <p>Интервал: 1 - {totalItems}</p>
+          <p>Всего: {totalItems}</p>
         </div>
         <div>
+
           <Pagination>
             <PaginationContent>
               <PaginationItem>
                 <PaginationPrevious onClick={() => handlePageChange(Math.max(1, currentPage - 1))} href='#' />
               </PaginationItem>
-              {Array.from({ length: totalPages }, (_, index) => (
-                <PaginationItem key={index}>
+              {getVisiblePages(totalPages, currentPage).map((page) => (
+                <PaginationItem key={page}>
                   <PaginationLink
-                    onClick={() => handlePageChange(index + 1)}
+                    onClick={() => handlePageChange(page)}
                     href='#'
-                    className={currentPage === index + 1 ? 'font-bold text-blue-500' : ''}
+                    className={currentPage === page ? 'font-bold text-blue-500' : ''}
                   >
-                    {index + 1}
+                    {page}
                   </PaginationLink>
                 </PaginationItem>
               ))}
@@ -80,6 +94,7 @@ const MainPage = () => {
               </PaginationItem>
             </PaginationContent>
           </Pagination>
+
         </div>
       </div>
       <form>
@@ -200,22 +215,12 @@ const MainPage = () => {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectGroup>
-                        <SelectLabel>Сотрудник</SelectLabel>
+                        <SelectLabel>Владелец</SelectLabel>
                         <SelectItem value='ikhtiyor'>Ихтиёр</SelectItem>
                         <SelectItem value='okhramon'>Охрамон</SelectItem>
                       </SelectGroup>
                     </SelectContent>
                   </Select>
-                </div>
-              </TableHead>
-              <TableHead>
-                <div>
-                  <p>Владелец</p>
-                  <Input
-                    className='w-[180px] p-1 text-black dark:text-white border rounded'
-                    type='text'
-                    placeholder='Фильтр'
-                  />
                 </div>
               </TableHead>
             </TableRow>
@@ -225,7 +230,7 @@ const MainPage = () => {
               <TableRow className='text-center'>
                 <TableCell>Загрузка...</TableCell>
               </TableRow>
-            ) : houses.map((item) => (
+            ) : data.map((item) => (
               <TableRow key={item.id} className='text-center'>
                 <TableCell className='font-medium'>{item.id}</TableCell>
                 <TableCell>
@@ -237,14 +242,20 @@ const MainPage = () => {
                     height={100}
                   />
                 </TableCell>
-                <TableCell>{item.date}</TableCell>
+                <TableCell>{moment(item.date).format("DD.MM.YYYY")}</TableCell>
                 <TableCell>{item.repair}</TableCell>
                 <TableCell className='uppercasex'>{`${item.price.toFixed(2)} ${item.valute}`}</TableCell>
                 <TableCell>{item.district}</TableCell>
                 <TableCell>{item.rooms}</TableCell>
                 <TableCell>{item.floor}</TableCell>
-                <TableCell>{item.employee}</TableCell>
-                <TableCell>{item.owner}</TableCell>
+                <TableCell>{item.employee.fullName}</TableCell>
+                <TableCell>{user && item.employee._id === user._id ? (
+                  <div className='flex space-x-3 items-center'>
+                    <Button variant={'outline'}><Edit /></Button>
+                    <Button variant={'outline'}>J<Send /></Button>
+                    <Button variant={'outline'}>T<Send /></Button>
+                  </div>
+                ) : null}</TableCell>
               </TableRow>
             ))}
           </TableBody>

@@ -39,6 +39,7 @@ import { useToast } from '@/hooks/use-toast';
 import { fetchData } from '@/http/api';
 import { useRouter } from 'next/navigation';
 import { useHouseStore } from '@/store/houses';
+import { useUser } from '@/store/user';
 
 
 
@@ -46,12 +47,11 @@ const rayons = ['Bektemir', "Mirzo Ulug'bek", 'Sergeli', 'Shayxontohur', 'Chilon
 
 
 const MainLayout = ({ children }: ChildProps) => {
+  const { user, setUserStore } = useUser()
   const { addHouse } = useHouseStore()
   const router = useRouter()
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [user, setUser] = useState<IUser | null>(null)
   const [users, setUsers] = useState<IUser[]>([])
-  const [filteredUsers, setFilteredUsers] = useState<IUser[]>([])
   const [searchUsers, setSearchUsers] = useState<string>('')
   // SELECT VALUES
   const [repair, setRepair] = useState<string>('')
@@ -97,10 +97,10 @@ const MainLayout = ({ children }: ChildProps) => {
     const getUserInfo = async () => {
       const res = await fetchData.get('/get-user-info')
       console.log(res.data)
-      setUser(res.data.user)
+      setUserStore(res.data.user)
     }
     getUserInfo()
-  }, []);
+  }, [setUserStore]);
 
   const onLogout = () => {
     localStorage.clear()

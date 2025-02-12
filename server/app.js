@@ -113,7 +113,7 @@ app.post('/api/create-house', tokenValidation, async (req, res) => {
       repair,
       address,
       userViaOwner,
-      owner,
+      employee,
       valute,
       landmark,
       district,
@@ -147,7 +147,7 @@ app.post('/api/create-house', tokenValidation, async (req, res) => {
 🏠 Район: ${district}
 📍 Адрес: ${address}
 📌 Ориентир: ${landmark}
-👤 Владелец: ${owner}
+👤 Владелец: ${employee}
 
 Информация о квартире:
 • Площадь: ${square} м²
@@ -185,7 +185,6 @@ app.post('/api/create-house', tokenValidation, async (req, res) => {
       price: Number(price),
       repair,
       userViaOwner,
-      owner,
       valute,
       checkConditioner: Boolean(checkConditioner),
       tv: Boolean(tv),
@@ -284,9 +283,9 @@ app.delete('/api/remove-house/:id', tokenValidation, async (req, res) => {
 });
 
 
-app.get('/api/get-all-houses', tokenValidation, async (req, res) => {
+app.get('/api/get-all-houses', async (req, res) => {
   try {
-    const houses = await House.find()
+    const houses = await House.find().populate('employee')
     return res.status(200).json({
       message: "Houses found successfuly",
       data: houses

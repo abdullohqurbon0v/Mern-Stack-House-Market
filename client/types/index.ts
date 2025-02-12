@@ -14,7 +14,6 @@ export interface IHouse {
   repair: string;
   address: string;
   userViaOwner: string;
-  owner: string;
   valute: string;
   landmark: string;
   district: string;
@@ -25,7 +24,7 @@ export interface IHouse {
   rooms: number;
   numberOfFloorOfTheBuilding: number;
   price: number;
-  employee: string,
+  employee: IUser,
   checkConditioner: boolean;
   tv: boolean;
   washingMaching: boolean;
