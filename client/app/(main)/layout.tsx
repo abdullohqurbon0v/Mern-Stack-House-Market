@@ -23,6 +23,7 @@ import { CalendarIcon, Home, Plus } from 'lucide-react';
 import { ModeToggle } from '@/components/shared/mode-toggle';
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogDescription,
   DialogHeader,
@@ -37,15 +38,17 @@ import { Calendar } from '@/components/ui/calendar';
 import { useToast } from '@/hooks/use-toast';
 import { fetchData } from '@/http/api';
 import { useRouter } from 'next/navigation';
-import axios from 'axios';
+import { useHouseStore } from '@/store/houses';
 
 
 
-const rayons = ['Bektemir', "Mirzo Ulug'bek", 'Sergeli', 'Shayxontohur', 'Chilonzor', 'Olmazor', 'Mirobod', 'Yashnobod', '']
+const rayons = ['Bektemir', "Mirzo Ulug'bek", 'Sergeli', 'Shayxontohur', 'Chilonzor', 'Olmazor', 'Mirobod', 'Yashnobod', 'Yunusobod', 'Uchtepa', 'Yakkasaroy', 'Toshkent tumani']
 
 
 const MainLayout = ({ children }: ChildProps) => {
+  const { addHouse } = useHouseStore()
   const router = useRouter()
+  const [isModalOpen, setIsModalOpen] = useState(false)
   const [user, setUser] = useState<IUser | null>(null)
   const [users, setUsers] = useState<IUser[]>([])
   const [filteredUsers, setFilteredUsers] = useState<IUser[]>([])
@@ -105,18 +108,16 @@ const MainLayout = ({ children }: ChildProps) => {
   }
 
   if (!isMounted) return null;
-
-
   const handleAddHome = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setLoading(true)
+    setLoading(true);
     try {
-      if (!repair || !address || !userViaOwner || !owner || !valute || !landmark || !district || !description || !square || !date || !floor || !rooms || !numberOfFloorOfTheBuildind || !price) {
-        setLoading(false)
+      if (!repair || !address || !userViaOwner || !owner || !valute || !landmark || !district || !description || !square || !date || !floor || !rooms || !numberOfFloorOfTheBuildind || !price || !files) {
+        setLoading(false);
         return toast({
           title: "Ошибка",
           description: "Нужно ввести все данные !!",
-        })
+        });
       }
       const formData = new FormData();
       formData.append("repair", repair);
@@ -138,37 +139,44 @@ const MainLayout = ({ children }: ChildProps) => {
       formData.append("washingMaching", washingMaching.toString());
       formData.append("prepayment", prepayment.toString());
       formData.append("deposit", deposit.toString());
+
       if (files && files.length > 0) {
         Array.from(files).forEach((file) => {
           formData.append("files[]", file);
         });
       }
-      const res = await fetchData.post('/create-house', formData);
 
-      console.log(res);
-      setLoading(false)
+      const res = await fetchData.post('/create-house', formData);
+      if (res.status === 200) {
+        addHouse(res.data.house)
+      }
+      setLoading(false);
     } catch (error) {
-      console.error(error);
+      console.log(error);
       toast({
         title: "Ошибка",
         description: "Ошибка с сервером, пожалуйста, попытайтесь заново",
       });
-      setLoading(false)
+      setLoading(false);
     }
   };
 
   const handelChangeSearch = (e: ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value
     setSearchUsers(value)
-    // const filter = users && users.
   }
 
   const handleOpenModal = async () => {
+    setIsModalOpen(true)
     try {
       const res = await fetchData.get('/get-all-users')
       setUsers(res.data.users)
       console.log(res)
     } catch (error) {
+      toast({
+        title: "Ошибка",
+        description: "Ошибка с сервером, пожалуйста, попытайтесь заново",
+      });
       console.log(error)
     }
   }
@@ -219,7 +227,7 @@ const MainLayout = ({ children }: ChildProps) => {
             </main>
           </div>
         </div>
-        <Dialog>
+        <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
           <DialogTrigger onClick={handleOpenModal} className="absolute left-[95%] top-[91%] border p-3 rounded-xl hover:bg-slate-900 transition-all z-50">
             <Plus />
           </DialogTrigger>
@@ -280,8 +288,9 @@ const MainLayout = ({ children }: ChildProps) => {
                             <SelectValue placeholder="Выберите" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="district1">Район 1</SelectItem>
-                            <SelectItem value="district2">Район 2</SelectItem>
+                            {rayons.map(item => (
+                              <SelectItem key={item} value={item}>{item}</SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                       </div>
@@ -423,7 +432,9 @@ const MainLayout = ({ children }: ChildProps) => {
                       </div>
                     </div>
                     <div className="flex justify-end space-x-2">
-                      <Button variant="outline">Отмена</Button>
+                      <DialogClose asChild>
+                        <Button variant="outline" type="button">Отмена</Button>
+                      </DialogClose>
                       <Button type="submit">{loading ? 'Загрузка...' : 'Создать'}</Button>
                     </div>
                   </form>

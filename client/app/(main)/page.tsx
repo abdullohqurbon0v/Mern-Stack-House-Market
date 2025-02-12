@@ -13,20 +13,12 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select';
 import Image from 'next/image';
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
+import { fetchData } from '@/http/api';
+import { IHouse } from '@/types';
+import { useHouseStore } from '@/store/houses';
 
-interface IHouse {
-  id: number,
-  imageUrl: string,
-  availabilityDate: string,
-  repair: string,
-  price: number,
-  district: string,
-  rooms: number,
-  floor: number,
-  employee: string,
-  owner: string
-}
 const MainPage = () => {
+  const { houses, setAllHouses } = useHouseStore()
   const router = useRouter();
   const [date, setDate] = useState<Date>()
   const [data, setData] = useState<IHouse[]>([]);
@@ -39,42 +31,17 @@ const MainPage = () => {
     if (!token) {
       router.push('/signin');
     }
+    const getHouses = async () => {
+      const response = await fetchData.get('/get-all-houses')
 
-    const fetchedData = [
-      { id: 1, imageUrl: "https://example.com/image1.jpg", availabilityDate: "7.2.2025", repair: "Евро ремонт", price: 400, district: "Мирзо Улугбек", rooms: 2, floor: 1, employee: "Ихтиёр", owner: "+998505510123" },
-      { id: 2, imageUrl: "https://example.com/image2.jpg", availabilityDate: "7.2.2025", repair: "Евро ремонт", price: 1200, district: "Яккасарай", rooms: 4, floor: 5, employee: "Охрамон", owner: "+998989900520" },
-      { id: 3, imageUrl: "https://example.com/image1.jpg", availabilityDate: "7.2.2025", repair: "Евро ремонт", price: 400, district: "Мирзо Улугбек", rooms: 2, floor: 1, employee: "Ихтиёр", owner: "+998505510123" },
-      { id: 4, imageUrl: "https://example.com/image2.jpg", availabilityDate: "7.2.2025", repair: "Евро ремонт", price: 1200, district: "Яккасарай", rooms: 4, floor: 5, employee: "Охрамон", owner: "+998989900520" },
-      { id: 5, imageUrl: "https://example.com/image1.jpg", availabilityDate: "7.2.2025", repair: "Евро ремонт", price: 400, district: "Мирзо Улугбек", rooms: 2, floor: 1, employee: "Ихтиёр", owner: "+998505510123" },
-      { id: 6, imageUrl: "https://example.com/image2.jpg", availabilityDate: "7.2.2025", repair: "Евро ремонт", price: 1200, district: "Яккасарай", rooms: 4, floor: 5, employee: "Охрамон", owner: "+998989900520" },
-      { id: 7, imageUrl: "https://example.com/image1.jpg", availabilityDate: "7.2.2025", repair: "Евро ремонт", price: 400, district: "Мирзо Улугбек", rooms: 2, floor: 1, employee: "Ихтиёр", owner: "+998505510123" },
-      { id: 8, imageUrl: "https://example.com/image2.jpg", availabilityDate: "7.2.2025", repair: "Евро ремонт", price: 1200, district: "Яккасарай", rooms: 4, floor: 5, employee: "Охрамон", owner: "+998989900520" },
-      { id: 9, imageUrl: "https://example.com/image1.jpg", availabilityDate: "7.2.2025", repair: "Евро ремонт", price: 400, district: "Мирзо Улугбек", rooms: 2, floor: 1, employee: "Ихтиёр", owner: "+998505510123" },
-      { id: 10, imageUrl: "https://example.com/image2.jpg", availabilityDate: "7.2.2025", repair: "Евро ремонт", price: 1200, district: "Яккасарай", rooms: 4, floor: 5, employee: "Охрамон", owner: "+998989900520" },
-      { id: 11, imageUrl: "https://example.com/image1.jpg", availabilityDate: "7.2.2025", repair: "Евро ремонт", price: 400, district: "Мирзо Улугбек", rooms: 2, floor: 1, employee: "Ихтиёр", owner: "+998505510123" },
-      { id: 12, imageUrl: "https://example.com/image2.jpg", availabilityDate: "7.2.2025", repair: "Евро ремонт", price: 1200, district: "Яккасарай", rooms: 4, floor: 5, employee: "Охрамон", owner: "+998989900520" },
-      { id: 13, imageUrl: "https://example.com/image1.jpg", availabilityDate: "7.2.2025", repair: "Евро ремонт", price: 400, district: "Мирзо Улугбек", rooms: 2, floor: 1, employee: "Ихтиёр", owner: "+998505510123" },
-      { id: 14, imageUrl: "https://example.com/image2.jpg", availabilityDate: "7.2.2025", repair: "Евро ремонт", price: 1200, district: "Яккасарай", rooms: 4, floor: 5, employee: "Охрамон", owner: "+998989900520" },
-      { id: 15, imageUrl: "https://example.com/image1.jpg", availabilityDate: "7.2.2025", repair: "Евро ремонт", price: 400, district: "Мирзо Улугбек", rooms: 2, floor: 1, employee: "Ихтиёр", owner: "+998505510123" },
-      { id: 16, imageUrl: "https://example.com/image2.jpg", availabilityDate: "7.2.2025", repair: "Евро ремонт", price: 1200, district: "Яккасарай", rooms: 4, floor: 5, employee: "Охрамон", owner: "+998989900520" },
-      { id: 17, imageUrl: "https://example.com/image1.jpg", availabilityDate: "7.2.2025", repair: "Евро ремонт", price: 400, district: "Мирзо Улугбек", rooms: 2, floor: 1, employee: "Ихтиёр", owner: "+998505510123" },
-      { id: 18, imageUrl: "https://example.com/image2.jpg", availabilityDate: "7.2.2025", repair: "Евро ремонт", price: 1200, district: "Яккасарай", rooms: 4, floor: 5, employee: "Охрамон", owner: "+998989900520" },
-      { id: 19, imageUrl: "https://example.com/image1.jpg", availabilityDate: "7.2.2025", repair: "Евро ремонт", price: 400, district: "Мирзо Улугбек", rooms: 2, floor: 1, employee: "Ихтиёр", owner: "+998505510123" },
-      { id: 20, imageUrl: "https://example.com/image2.jpg", availabilityDate: "7.2.2025", repair: "Евро ремонт", price: 1200, district: "Яккасарай", rooms: 4, floor: 5, employee: "Охрамон", owner: "+998989900520" },
-      { id: 21, imageUrl: "https://example.com/image1.jpg", availabilityDate: "7.2.2025", repair: "Евро ремонт", price: 400, district: "Мирзо Улугбек", rooms: 2, floor: 1, employee: "Ихтиёр", owner: "+998505510123" },
-      { id: 22, imageUrl: "https://example.com/image2.jpg", availabilityDate: "7.2.2025", repair: "Евро ремонт", price: 1200, district: "Яккасарай", rooms: 4, floor: 5, employee: "Охрамон", owner: "+998989900520" },
-      { id: 23, imageUrl: "https://example.com/image1.jpg", availabilityDate: "7.2.2025", repair: "Евро ремонт", price: 400, district: "Мирзо Улугбек", rooms: 2, floor: 1, employee: "Ихтиёр", owner: "+998505510123" },
-      { id: 24, imageUrl: "https://example.com/image2.jpg", availabilityDate: "7.2.2025", repair: "Евро ремонт", price: 1200, district: "Яккасарай", rooms: 4, floor: 5, employee: "Охрамон", owner: "+998989900520" },
-      { id: 25, imageUrl: "https://example.com/image1.jpg", availabilityDate: "7.2.2025", repair: "Евро ремонт", price: 400, district: "Мирзо Улугбек", rooms: 2, floor: 1, employee: "Ихтиёр", owner: "+998505510123" },
-      { id: 26, imageUrl: "https://example.com/image2.jpg", availabilityDate: "7.2.2025", repair: "Евро ремонт", price: 1200, district: "Яккасарай", rooms: 4, floor: 5, employee: "Охрамон", owner: "+998989900520" },
-      { id: 27, imageUrl: "https://example.com/image1.jpg", availabilityDate: "7.2.2025", repair: "Евро ремонт", price: 400, district: "Мирзо Улугбек", rooms: 2, floor: 1, employee: "Ихтиёр", owner: "+998505510123" },
-      { id: 28, imageUrl: "https://example.com/image2.jpg", availabilityDate: "7.2.2025", repair: "Евро ремонт", price: 1200, district: "Яккасарай", rooms: 4, floor: 5, employee: "Охрамон", owner: "+998989900520" },
-      { id: 29, imageUrl: "https://example.com/image1.jpg", availabilityDate: "7.2.2025", repair: "Евро ремонт", price: 400, district: "Мирзо Улугбек", rooms: 2, floor: 1, employee: "Ихтиёр", owner: "+998505510123" },
-      { id: 30, imageUrl: "https://example.com/image2.jpg", availabilityDate: "7.2.2025", repair: "Евро ремонт", price: 1200, district: "Яккасарай", rooms: 4, floor: 5, employee: "Охрамон", owner: "+998989900520" },
-    ];
-
-    setData(fetchedData.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage));
-    setTotalItems(fetchedData.length);
+      console.log(response)
+      setData(response.data.data.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage));
+      setTotalItems(response.data.data.length);
+      console.log(data)
+      setAllHouses(response.data.data)
+      setData(houses)
+    }
+    getHouses()
   }, [router, currentPage, itemsPerPage]);
 
   const handlePageChange = (page: number) => {
@@ -254,21 +221,25 @@ const MainPage = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {data.map((item) => (
-              <TableRow key={item.id}>
+            {houses.length === 0 ? (
+              <TableRow className='text-center'>
+                <TableCell>Загрузка...</TableCell>
+              </TableRow>
+            ) : houses.map((item) => (
+              <TableRow key={item.id} className='text-center'>
                 <TableCell className='font-medium'>{item.id}</TableCell>
                 <TableCell>
                   <Image
-                    src={item.imageUrl}
+                    src={`http://localhost:8080/${item.files[0]}`}
                     alt={`Image ${item.id}`}
-                    className='w-[80px] h-[50px] rounded border'
+                    className='w-[80px] h-[50px] rounded border object-cover'
                     width={100}
                     height={100}
                   />
                 </TableCell>
-                <TableCell>{item.availabilityDate}</TableCell>
+                <TableCell>{item.date}</TableCell>
                 <TableCell>{item.repair}</TableCell>
-                <TableCell>{`$${item.price.toFixed(2)}`}</TableCell>
+                <TableCell className='uppercasex'>{`${item.price.toFixed(2)} ${item.valute}`}</TableCell>
                 <TableCell>{item.district}</TableCell>
                 <TableCell>{item.rooms}</TableCell>
                 <TableCell>{item.floor}</TableCell>

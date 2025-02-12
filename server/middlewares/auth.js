@@ -2,6 +2,7 @@ const jwt = require('jsonwebtoken')
 
 function tokenValidation(req, res, next) {
   const header = req.headers['authorization']
+  console.log(header)
   const token = header && header.split(' ')[1]
 
   if (!token) {

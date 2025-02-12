@@ -27,7 +27,6 @@ app.use(cors({
 app.use(express.json());
 app.use(cookieParser({}))
 app.use(express.static('static'))
-app.use(fileUpload({}))
 app.use(bodyParser.json())
 
 app.post('/api/create-user', async (req, res) => {
@@ -132,12 +131,6 @@ app.post('/api/create-house', tokenValidation, async (req, res) => {
       deposit,
     } = req.body;
 
-    if (!address || !landmark || !district || !description || !price) {
-      return res.status(400).json({ message: "Error: All required fields must be filled" });
-    }
-    console.log()
-
-
     let uploadedFiles = [];
     if (req.files && req.files['files[]']) {
       const files = Array.isArray(req.files['files[]']) ? req.files['files[]'] : [req.files['files[]']];
@@ -207,7 +200,7 @@ app.post('/api/create-house', tokenValidation, async (req, res) => {
     return res.status(200).json({ message: "House created successfully", house: newHouse });
   } catch (error) {
     console.error('Error:', error);
-    return res.status(500).json({ message: "Something went wrong. Try again later." });
+    return res.status(500).json({ message: "Something went wrong. Try again later.", });
   }
 });
 
@@ -289,6 +282,20 @@ app.delete('/api/remove-house/:id', tokenValidation, async (req, res) => {
     return res.status(500).json({ message: "Something went wrong. Try again later." });
   }
 });
+
+
+app.get('/api/get-all-houses', tokenValidation, async (req, res) => {
+  try {
+    const houses = await House.find()
+    return res.status(200).json({
+      message: "Houses found successfuly",
+      data: houses
+    })
+  } catch (error) {
+    console.log("Error", error)
+    return res.status(500).json({ message: "Something went wrong. Try again later." })
+  }
+})
 
 mongoose.connect(process.env.MONGO_URL)
   .then(() => {

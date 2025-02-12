@@ -8,20 +8,23 @@ async function sendMessage(message, images) {
     const sendMediaGroupUrl = `https://api.telegram.org/bot${botToken}/sendMediaGroup`;
 
     const media = images.map((image, index) => ({
-      type: 'photo',
-      media: `https://0a9e-90-156-197-221.ngrok-free.app/${image}`,
+      type: "photo",
+      media: `https://1b9b-213-230-78-183.ngrok-free.app/${image}`,
       caption: index === 0 ? message : undefined,
-      parse_mode: 'Markdown'
+      parse_mode: "Markdown"
     }));
-    console.log(media)
+
+    console.log(media);
 
     const response = await axios.post(sendMediaGroupUrl, {
       chat_id: chatId,
       media: media,
     });
-    console.log('Media group sent:', response.data);
+
+    console.log("Media group sent:", response.data);
   } catch (error) {
-    console.error('Error sending media group:', error.message);
+    console.error("Error sending media group:", error.message);
+    console.error(error.response?.data); // Выведет доп. информацию
     throw error;
   }
 }
