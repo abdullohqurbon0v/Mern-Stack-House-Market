@@ -57,7 +57,6 @@ const MainLayout = ({ children }: ChildProps) => {
   const [repair, setRepair] = useState<string>('')
   const [address, setAddress] = useState<string>('')
   const [userViaOwner, setUserViaOwner] = useState<string>('')
-  const [owner, setOwner] = useState<string>('')
   const [valute, setValute] = useState<string>('')
 
   // CHANGE VALUES
@@ -112,7 +111,7 @@ const MainLayout = ({ children }: ChildProps) => {
     e.preventDefault();
     setLoading(true);
     try {
-      if (!repair || !address || !userViaOwner || !owner || !valute || !landmark || !district || !description || !square || !date || !floor || !rooms || !numberOfFloorOfTheBuildind || !price || !files) {
+      if (!repair || !address || !userViaOwner || !valute || !landmark || !district || !description || !square || !date || !floor || !rooms || !numberOfFloorOfTheBuildind || !price || !files) {
         setLoading(false);
         return toast({
           title: "Ошибка",
@@ -123,7 +122,6 @@ const MainLayout = ({ children }: ChildProps) => {
       formData.append("repair", repair);
       formData.append("address", address);
       formData.append("userViaOwner", userViaOwner);
-      formData.append("owner", owner);
       formData.append("valute", valute);
       formData.append("landmark", landmark);
       formData.append("district", district);
@@ -251,7 +249,7 @@ const MainLayout = ({ children }: ChildProps) => {
                         </Select>
                       </div>
                       <div>
-                        <label className="block text-sm font-medium">Пользователь как владелец</label>
+                        <label className="block text-sm font-medium">Владелец</label>
                         <Select onValueChange={(value) => setUserViaOwner(value)}>
                           <SelectTrigger>
                             <SelectValue placeholder="Выберите владельца пользователя" />
@@ -262,21 +260,6 @@ const MainLayout = ({ children }: ChildProps) => {
                               {users?.map(item => (
                                 <SelectItem key={item._id} value={item.fullName}>{item.fullName}</SelectItem>
                               ))}
-                            </form>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium">Владелец</label>
-                        <Select onValueChange={(value) => setOwner(value)}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Выберите владельца квартиры" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <form className='flex flex-col space-y-3'>
-                              <Input type="text" placeholder="Введите адрес" />
-                              <SelectItem value="ownew1">Пользователь 1</SelectItem>
-                              <SelectItem value="ownew2">Пользователь 2</SelectItem>
                             </form>
                           </SelectContent>
                         </Select>

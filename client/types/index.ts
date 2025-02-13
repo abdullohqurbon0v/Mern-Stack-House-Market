@@ -19,7 +19,7 @@ export interface IHouse {
   district: string;
   description: string;
   square: number;
-  date: string;
+  date: Date;
   floor: number;
   rooms: number;
   numberOfFloorOfTheBuilding: number;
