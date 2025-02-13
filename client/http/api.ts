@@ -1,7 +1,7 @@
 import axios from 'axios'
 
 export const fetchData = axios.create({
-  baseURL: "http://localhost:8080/api/",
+  baseURL: "https://53e5-213-230-78-183.ngrok-free.app/api/",
   timeout: 20000,
 })
 

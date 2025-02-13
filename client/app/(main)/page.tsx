@@ -236,7 +236,7 @@ const MainPage = () => {
                 <TableCell>
                   {item.files && item.files.length > 0 ? (
                     <Image
-                      src={`http://localhost:8080/${item.files[0]}`}
+                      src={`https://53e5-213-230-78-183.ngrok-free.app/${item.files[0]}`}
                       alt={`Image ${item.id}`}
                       className='w-[80px] h-[50px] rounded border object-cover'
                       width={100}
