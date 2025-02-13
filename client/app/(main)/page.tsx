@@ -234,13 +234,17 @@ const MainPage = () => {
               <TableRow key={item.id} className='text-center'>
                 <TableCell className='font-medium'>{item.id}</TableCell>
                 <TableCell>
-                  <Image
-                    src={`http://localhost:8080/${item.files[0]}`}
-                    alt={`Image ${item.id}`}
-                    className='w-[80px] h-[50px] rounded border object-cover'
-                    width={100}
-                    height={100}
-                  />
+                  {item.files && item.files.length > 0 ? (
+                    <Image
+                      src={`http://localhost:8080/${item.files[0]}`}
+                      alt={`Image ${item.id}`}
+                      className='w-[80px] h-[50px] rounded border object-cover'
+                      width={100}
+                      height={100}
+                    />
+                  ) : (
+                    <div>Нет изображения</div>
+                  )}
                 </TableCell>
                 <TableCell>{moment(item.date).format("DD.MM.YYYY")}</TableCell>
                 <TableCell>{item.repair}</TableCell>
@@ -259,6 +263,7 @@ const MainPage = () => {
               </TableRow>
             ))}
           </TableBody>
+
         </Table>
       </form>
     </div>
