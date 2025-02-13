@@ -127,7 +127,7 @@ const MainLayout = ({ children }: ChildProps) => {
       formData.append("district", district);
       formData.append("description", description);
       formData.append("square", square.toString());
-      formData.append("date", date);
+      formData.append("date", date.toISOString());
       formData.append("floor", floor.toString());
       formData.append("rooms", rooms.toString());
       formData.append("numberOfFloorOfTheBuildind", numberOfFloorOfTheBuildind.toString());

@@ -19,16 +19,16 @@ export interface IHouse {
   district: string;
   description: string;
   square: number;
-  date: Date;
+  date: string;
   floor: number;
   rooms: number;
   numberOfFloorOfTheBuilding: number;
   price: number;
-  employee: IUser,
+  employee: IUser;
   checkConditioner: boolean;
   tv: boolean;
   washingMaching: boolean;
   prepayment: boolean;
   deposit: boolean;
-  files: FileList[] | null;
+  files: File[] | null;
 }
