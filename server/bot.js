@@ -9,7 +9,7 @@ async function sendMessage(message, images) {
 
     const media = images.map((image, index) => ({
       type: "photo",
-      media: `https://apimyhomegroup.onrender.com//${image}`,
+      media: `https://apimyhomegroup.onrender.com/${image}`,
       caption: index === 0 ? message : undefined,
       parse_mode: "Markdown"
     }));
