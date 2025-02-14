@@ -20,7 +20,6 @@ import { useUser } from '@/store/user';
 import moment from 'moment'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { Separator } from '@radix-ui/react-separator';
 
 const MainPage = () => {
   const { toast } = useToast()
@@ -299,7 +298,7 @@ const MainPage = () => {
                             <DialogHeader>
                               <DialogTitle>Edit House</DialogTitle>
                               <DialogDescription>
-                                Make changes to your profile here. Click save when you're done.
+                                Make changes to your profile here. Click save when youre done.
                               </DialogDescription>
                             </DialogHeader>
                             <div className="grid gap-4 py-4">
