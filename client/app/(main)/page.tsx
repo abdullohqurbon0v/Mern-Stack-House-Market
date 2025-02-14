@@ -268,7 +268,7 @@ const MainPage = () => {
                   <TableCell onClick={() => onOpenViewModal(item._id)}>
                     {item.files && item.files.length > 0 ? (
                       <Image
-                        src={`http://localhost:8080/${item.files[0]}`}
+                        src={`https://apimyhomegroup.onrender.com/${item.files[0]}`}
                         alt={`Image ${item.id}`}
                         className="w-[80px] h-[50px] rounded border object-cover"
                         width={100}
@@ -336,7 +336,7 @@ const MainPage = () => {
                     {viewData.files?.map((item) => (
                       <div key={item} className="rounded-lg overflow-hidden shadow-lg">
                         <Image
-                          src={`http://localhost:8080/${item}`}
+                          src={`https://apimyhomegroup.onrender.com/${item}`}
                           alt={item}
                           width={300}
                           height={500}
