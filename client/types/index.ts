@@ -10,6 +10,7 @@ export interface IUser {
 
 
 export interface IHouse {
+  _id: string,
   id: string;
   repair: string;
   address: string;
@@ -30,5 +31,7 @@ export interface IHouse {
   washingMaching: boolean;
   prepayment: boolean;
   deposit: boolean;
-  files: File[] | null;
+  files: string[] | null;
+  updatedAt: string;
+  createdAt: string
 }

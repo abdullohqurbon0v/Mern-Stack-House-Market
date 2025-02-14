@@ -106,6 +106,45 @@ app.get('/api/get-user-info', tokenValidation, async (req, res) => {
   }
 })
 
+app.get('/api/get-user/:id', tokenValidation, async (req, res) => {
+  try {
+    const id = req.params.id
+    const foundedUser = await userModel.findById(id)
+    if (!foundedUser) {
+      return res.status(400).json({
+        message: "Manager not found",
+      })
+    }
+
+    return res.status(200).json({
+      message: "User found usccessfult",
+      user: foundedUser
+    })
+  } catch (error) {
+    console.log(error)
+    return res.status(500).json({
+      message: "Something went wrong. Pleace try again latter"
+    })
+  }
+})
+
+
+app.get('/api/get-house/:id', tokenValidation, async (req, res) => {
+  try {
+    const id = req.params.id
+    const foundedHouse = await House.findById(id)
+    return res.status(200).json({
+      message: "Found successfuly",
+      house: foundedHouse
+    })
+
+  } catch (error) {
+    return res.status(500).json({
+      message: "Something went wrong. Pleace try again latter"
+    })
+  }
+})
+
 app.post('/api/create-house', tokenValidation, async (req, res) => {
   try {
     const { user } = req.user;
@@ -295,6 +334,9 @@ app.get('/api/get-all-houses', async (req, res) => {
     return res.status(500).json({ message: "Something went wrong. Try again later." })
   }
 })
+
+
+app.put('/api/filter-houses', async (req, res) => { })
 
 mongoose.connect(process.env.MONGO_URL)
   .then(() => {

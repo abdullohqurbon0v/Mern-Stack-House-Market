@@ -9,7 +9,7 @@ async function sendMessage(message, images) {
 
     const media = images.map((image, index) => ({
       type: "photo",
-      media: `${process.env.SERVER_URL}/${image}`,
+      media: `https://4fcf-90-156-197-221.ngrok-free.app/${image}`,
       caption: index === 0 ? message : undefined,
       parse_mode: "Markdown"
     }));

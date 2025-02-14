@@ -52,7 +52,6 @@ const MainLayout = ({ children }: ChildProps) => {
   const router = useRouter()
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [users, setUsers] = useState<IUser[]>([])
-  const [searchUsers, setSearchUsers] = useState<string>('')
   // SELECT VALUES
   const [repair, setRepair] = useState<string>('')
   const [address, setAddress] = useState<string>('')
@@ -95,7 +94,7 @@ const MainLayout = ({ children }: ChildProps) => {
     setIsMounted(true);
     const getUserInfo = async () => {
       const res = await fetchData.get('/get-user-info')
-      console.log(res.data)
+      console.log("User info", res)
       setUserStore(res.data.user)
     }
     getUserInfo()
@@ -111,7 +110,7 @@ const MainLayout = ({ children }: ChildProps) => {
     e.preventDefault();
     setLoading(true);
     try {
-      if (!repair || !address || !userViaOwner || !valute || !landmark || !district || !description || !square || !date || !floor || !rooms || !numberOfFloorOfTheBuildind || !price || !files) {
+      if (!repair || !address || !userViaOwner || !valute || !landmark || !description || !square || !date || !rooms || !numberOfFloorOfTheBuildind || !price || !files) {
         setLoading(false);
         return toast({
           title: "Ошибка",
@@ -158,11 +157,6 @@ const MainLayout = ({ children }: ChildProps) => {
       setLoading(false);
     }
   };
-
-  const handelChangeSearch = (e: ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value
-    setSearchUsers(value)
-  }
 
   const handleOpenModal = async () => {
     setIsModalOpen(true)
@@ -243,8 +237,10 @@ const MainLayout = ({ children }: ChildProps) => {
                             <SelectValue placeholder="Выберите" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="new">Новый</SelectItem>
-                            <SelectItem value="old">Старый</SelectItem>
+                            <SelectItem value="Авторский ремонт">Авторский ремонт</SelectItem>
+                            <SelectItem value="Хайтек">Хайтек</SelectItem>
+                            <SelectItem value="Новый">Новый</SelectItem>
+                            <SelectItem value="Евро ремонт">Евро ремонт</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -256,7 +252,6 @@ const MainLayout = ({ children }: ChildProps) => {
                           </SelectTrigger>
                           <SelectContent>
                             <form className='flex flex-col space-y-3'>
-                              <Input type="text" placeholder="Введите адрес" value={searchUsers} onChange={(e) => handelChangeSearch(e)} />
                               {users?.map(item => (
                                 <SelectItem key={item._id} value={item.fullName}>{item.fullName}</SelectItem>
                               ))}
