@@ -170,6 +170,12 @@ app.post('/api/create-house', tokenValidation, async (req, res) => {
       deposit,
     } = req.body;
 
+    console.log(washingMaching)
+    console.log(tv)
+    console.log(deposit)
+    console.log(prepayment)
+    console.log(checkConditioner)
+
     let uploadedFiles = [];
     if (req.files && req.files['files[]']) {
       const files = Array.isArray(req.files['files[]']) ? req.files['files[]'] : [req.files['files[]']];
@@ -196,13 +202,13 @@ app.post('/api/create-house', tokenValidation, async (req, res) => {
 • Описание: ${description}
 
 Удобства:
-• Кондиционер: ${checkConditioner ? 'Да' : 'Нет'}
-• Телевизор: ${tv ? 'Да' : 'Нет'}
-• Стиральная машина: ${washingMaching ? 'Да' : 'Нет'}
+• Кондиционер: ${checkConditioner == 'true' ? 'Да' : 'Нет'}
+• Телевизор: ${tv == 'true' ? 'Да' : 'Нет'}
+• Стиральная машина: ${washingMaching == 'true' ? 'Да' : 'Нет'}
 
 Способы оплаты:
-💸 Предоплата: ${prepayment ? 'Да' : 'Нет'}
-💳 Депозит: ${deposit ? `Да` : 'Нет'}
+💸 Предоплата: ${prepayment == 'true' ? 'Да' : 'Нет'}
+💳 Депозит: ${deposit == 'trur' ? `Да` : 'Нет'}
 💰 Цена: ${price}${valute}
 
 📅 Дата: ${date || "Не указана"}

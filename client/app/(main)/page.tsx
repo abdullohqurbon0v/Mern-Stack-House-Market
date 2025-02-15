@@ -259,7 +259,7 @@ const MainPage = () => {
           <TableBody>
             {houses.length === 0 ? (
               <TableRow className="text-center">
-                <TableCell>Загрузка...</TableCell>
+                <TableCell>У вас пока что нету квартир на продажу</TableCell>
               </TableRow>
             ) : (
               data.map((item) => (
@@ -268,7 +268,7 @@ const MainPage = () => {
                   <TableCell onClick={() => onOpenViewModal(item._id)}>
                     {item.files && item.files.length > 0 ? (
                       <Image
-                        src={`https://apimyhomegroup.onrender.com/${item.files[0]}`}
+                        src={`http://localhost:8080/${item.files[0]}`}
                         alt={`Image ${item.id}`}
                         className="w-[80px] h-[50px] rounded border object-cover"
                         width={100}
@@ -331,12 +331,11 @@ const MainPage = () => {
             <div className="space-y-6 overflow-y-auto max-h-[70vh]">
               {viewData && (
                 <div>
-                  {/* Images */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {viewData.files?.map((item) => (
                       <div key={item} className="rounded-lg overflow-hidden shadow-lg">
                         <Image
-                          src={`https://apimyhomegroup.onrender.com/${item}`}
+                          src={`http://localhost:8080/${item}`}
                           alt={item}
                           width={300}
                           height={500}
