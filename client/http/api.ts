@@ -1,7 +1,7 @@
 import axios from 'axios'
 
 export const fetchData = axios.create({
-  baseURL: "https://apimyhomegroup.onrender.com/api",
+  baseURL: "http://localhost:8080/api",
   timeout: 20000,
 })
 
