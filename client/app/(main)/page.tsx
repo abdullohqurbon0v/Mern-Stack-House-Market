@@ -1,38 +1,82 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
-import { format } from 'date-fns';
-import { Calendar as CalendarIcon, Edit, Send } from 'lucide-react';
-import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Dialog, DialogContent, DialogFooter, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select';
-import Image from 'next/image';
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Textarea } from '@/components/ui/textarea';
+import { rayons } from '@/constants';
+import { useToast } from '@/hooks/use-toast';
 import { fetchData } from '@/http/api';
-import { IHouse } from '@/types';
+import { cn } from '@/lib/utils';
 import { useHouseStore } from '@/store/houses';
 import { useUser } from '@/store/user';
-import moment from 'moment'
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { useToast } from '@/hooks/use-toast';
+import { IHouse, IUser } from '@/types';
+import { format } from 'date-fns';
+import { Calendar as CalendarIcon, Edit, Send } from 'lucide-react';
+import moment from 'moment';
+import Image from 'next/image';
+import { useRouter } from 'next/navigation';
+import { FormEvent, useEffect, useState } from 'react';
 
 const MainPage = () => {
   const { toast } = useToast()
   const { user } = useUser()
   const { houses, setAllHouses } = useHouseStore()
   const router = useRouter();
-  const [date, setDate] = useState<Date>()
-  const [data, setData] = useState<IHouse[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
   const [totalItems, setTotalItems] = useState(0);
   const [isOpenViewModal, setIsOpenViewModal] = useState(false)
   const [viewData, setViewData] = useState<IHouse | null>(null)
+  const [users, setUsers] = useState<IUser[] | null>(null)
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false)
+  const [loading, setLoading] = useState<boolean>(false)
+  const [$loading, $setLoading] = useState<boolean>(false)
+  const [selectedEditHouse, setSelectedEditHouse] = useState<string>('')
+  const [loadingWhenDelete, setLoadingWhenDelete] = useState<boolean>(false)
+
+  // DATE
+  const [$date, $setDate] = useState<Date>( );
+  // CHECKBOX
+  const [checkConditioner, setCheckConditioner] = useState<boolean>(false)
+  const [tv, setTv] = useState<boolean>(false)
+  const [washingMaching, setWashingMachine] = useState<boolean>(false)
+  const [prepayment, setPrepayment] = useState<boolean>(false)
+  const [deposit, setDeposit] = useState<boolean>(false)
+
+  // NUMBER STATES
+  const [rooms, setRooms] = useState<number>(0)
+  const [floors, setFloors] = useState<number>(0)
+  const [square, setSquare] = useState<number>(0)
+  const [price, setPrice] = useState<number>(1)
+  const [numberOfFloorOfTheBuildind, setNumberOfFloorOfTheBuildind] = useState<number>(0)
+
+  // INPIT CHANGE ITEMS
+  const [address, setAddress] = useState<string>('')
+  const [landmark, setLandmark] = useState<string>('')
+  const [description, setDescription] = useState<string>('')
+
+  // SELECT ITEMS
+  const [repair, setRepair] = useState<string>('')
+  const [userViaOwner, setUserViaOwner] = useState<string>('')
+  const [district, setDistrict] = useState<string>('')
+  const [valute, setValute] = useState<string>('')
+
+  // FILTER
+  const [fId, setFId] = useState<number>(0)
+  const [date, setDate] = useState<Date>()
+  const [fRepair, setFRepair] = useState('')
+  const [fPrice, setFPrice] = useState(0)
+  const [fDistrict, setFDistrict] = useState('')
+  const [fRooms, setFRooms] = useState(0)
+  const [fFloors, setFFloors] = useState(0)
+  const [fUserViaOwner, setFUserViaOwner] = useState('')
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -41,29 +85,15 @@ const MainPage = () => {
     }
     const getHouses = async () => {
       const response = await fetchData.get('/get-all-houses')
-
-      console.log(response)
-      setData(response.data.data.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage));
+      setAllHouses(response.data.data.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage))
+      const res = await fetchData.get('/get-all-users')
+      setUsers(res.data.users)
+      console.log("All housess  ", response)
       setTotalItems(response.data.data.length);
-      console.log(data)
-      setAllHouses(response.data.data)
     }
     getHouses()
     console.log("render")
   }, [router, currentPage, itemsPerPage, setAllHouses]);
-
-  async function onEditHouse(id: string) {
-    try {
-      const response = await fetchData.get(`/get-house/${id}`)
-      console.log(response)
-    } catch (error) {
-      console.log(error)
-      toast({
-        title: "Ошибка",
-        description: "Ошибка с сервером пожалуйста попытайтесь заново"
-      })
-    }
-  }
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -80,25 +110,166 @@ const MainPage = () => {
     return Array.from({ length: endPage - startPage + 1 }, (_, i) => startPage + i);
   };
 
-  async function onOpenViewModal(id: string) {
+  async function onOpenViewModal(id: string, status: string) {
+    setLoading(true)
     setViewData(null)
-    setIsOpenViewModal(true)
+    setSelectedEditHouse(id)
+    if (status === 'view') {
+      setIsOpenViewModal(true)
+    }
     try {
       const response = await fetchData.get(`/get-house/${id}`)
+      setAddress(response.data.house.address)
+      setLandmark(response.data.house.landmark)
+      setDescription(response.data.house.description)
+      setRepair(response.data.house.repair)
+      setUserViaOwner(response.data.house.userViaOwner)
+      setDistrict(response.data.house.district)
+      setValute(response.data.house.valute)
+      setPrice(response.data.house.price)
+      setSquare(response.data.house.square)
+      setFloors(response.data.house.floor)
+      setRooms(response.data.house.rooms)
+      setCheckConditioner(Boolean(response.data.house.checkConditioner))
+      setTv(Boolean(response.data.house.tv))
+      setWashingMachine(Boolean(response.data.house.washingMaching))
+      setPrepayment(Boolean(response.data.house.prepayment))
+      setDeposit(Boolean(response.data.house.deposit))
+      setNumberOfFloorOfTheBuildind(response.data.house.numberOfFloorOfTheBuildind)
+      $setDate(response.data.house.date)
+
       setViewData(response.data.house)
+      setLoading(false)
       console.log(response)
     } catch (error) {
+      toast({
+        title: "Ошибка",
+        description: "Ошибка не получилось загрузить данные, попытайтесь заново",
+      })
+      setLoading(false)
       console.log(error)
     }
   }
 
+  async function handleEditData(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    $setLoading(true)
+    try {
+        // if (!repair || !address || !userViaOwner || !valute || !landmark || !description || !square || !date || !rooms || !price || !files) {
+        //   setLoading(false);
+        //   return toast({
+        //     title: "Ошибка",
+        //     description: "Нужно ввести все данные !!",
+        //   });
+        // }
+      const formData = new FormData()
+      formData.append("repair", repair);
+      formData.append("address", address);
+      formData.append("userViaOwner", userViaOwner);
+      formData.append("valute", valute);
+      formData.append("landmark", landmark);
+      formData.append("district", district);
+      formData.append("description", description);
+      formData.append("square", square.toString());
+      const parsedDate = new Date($date);
+      if (isNaN(parsedDate.getTime())) {
+          console.error("Invalid date format:", $date);
+          $setLoading(false)
+          return;
+      }
+      formData.append("date", parsedDate.toISOString());
+      formData.append("floor", floors.toString());
+      formData.append("rooms", rooms.toString());
+      formData.append("numberOfFloorOfTheBuildind", numberOfFloorOfTheBuildind.toString());
+      formData.append("price", price.toString());
+      formData.append("checkConditioner", checkConditioner.toString());
+      formData.append("tv", tv.toString());
+      formData.append("washingMaching", washingMaching.toString());
+      formData.append("prepayment", prepayment.toString());
+      formData.append("deposit", deposit.toString());
+      const res = await fetchData.put(`/edit-house/${selectedEditHouse}`, formData)
+      toast({
+        title: "Успех",
+        description: "Данные сохранены",
+        duration: 3000
+      })
+      console.log(res)
+      $setLoading(false)
+    } catch (error) {
+      console.log(error)
+      toast({
+        title: "Ошибка",
+        variant: "destructive",
+        description: "Ошибка с сервером, пожалуйста, попытайтесь заново",
+        duration: 3000
+      })
+      $setLoading(false)
+    }
+  }
+
+  const onDeleteHouse = async (id: string) => {
+    setLoadingWhenDelete(true)
+    try {
+      const response = await fetchData.delete(`/remove-house/${id}`)
+      console.log(response)
+       toast({
+        title: "Успех",
+        description: "Успех данные были удолены",
+        duration: 3000
+      })
+      setLoadingWhenDelete(false)
+      setIsModalOpen(false)
+    } catch (error) {
+      console.log(error)
+       toast({
+        title: "Ошибка",
+        variant: "destructive",
+        description: "Ошибка с сервером, пожалуйста, попытайтесь заново",
+        duration: 3000
+      })
+      setLoadingWhenDelete(false)
+    }
+  }
+  const handleChangeData = async () => {
+    const formData = new FormData();
+    formData.append("id", fId.toString());
+    formData.append("repair", fRepair);
+    formData.append('date', date ? date.toISOString() : '');
+    formData.append("price", fPrice.toString());
+    formData.append("district", fDistrict);
+    formData.append('rooms', fRooms.toString());
+    formData.append('floor', fFloors.toString());
+    formData.append('userViaOwner', fUserViaOwner);
+
+    try {
+      const response = await fetchData.put('/filter-houses', formData);
+      setAllHouses(response.data.houses)
+    } catch (error: any) {
+      if(error.status === 400) {
+        return
+      }
+      toast({
+        title: "Ошибка",
+        description: "Ошибка с сервером, пожалуйста, попытайтесь заново",
+        duration: 3000
+      });
+    }
+  };
+
+  useEffect(() => {
+    handleChangeData()
+  }, [fId, date, fRepair, fPrice, fDistrict,fRooms, fFloors, fUserViaOwner])
+
+  const onRemoveFieldData =  () => {
+
+  }
 
 
   return (
     <div className='flex flex-col space-y-2'>
       <div className='flex justify-between'>
         <div className='flex items-center space-x-5'>
-          <Button color={''}>Очистить фильтр</Button>
+          <Button onClick={onRemoveFieldData}>Очистить фильтр</Button>
           <p>Интервал: 1 - {totalItems}</p>
           <p>Всего: {totalItems}</p>
         </div>
@@ -138,6 +309,10 @@ const MainPage = () => {
                   <p>ИД</p>
                   <Input
                     className='w-[100px] p-1 text-black dark:text-white border rounded'
+                    onChange={(e) => {
+                      setFId(Number(e.target.value))
+                    }}
+                    value={fId}
                     type='number'
                     placeholder='Фильтр'
                   />
@@ -174,16 +349,19 @@ const MainPage = () => {
               <TableHead>
                 <div>
                   <p>Ремонт</p>
-                  <Select>
+                  <Select onValueChange={value => {
+                    setFRepair(value)
+                  }}>
                     <SelectTrigger className='w-[180px]'>
                       <SelectValue placeholder='Выберите' />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectGroup>
                         <SelectLabel>Тип ремонта</SelectLabel>
-                        <SelectItem value='euro'>Евро ремонт</SelectItem>
-                        <SelectItem value='cosmetic'>Косметический</SelectItem>
-                        <SelectItem value='none'>Без ремонта</SelectItem>
+                         <SelectItem value="Авторский ремонт">Авторский ремонт</SelectItem>
+                         <SelectItem value="Хайтек">Хайтек</SelectItem>
+                        <SelectItem value="Новый">Новый</SelectItem>
+                        <SelectItem value="Евро ремонт">Евро ремонт</SelectItem>
                       </SelectGroup>
                     </SelectContent>
                   </Select>
@@ -195,6 +373,9 @@ const MainPage = () => {
                   <Input
                     className='w-[100px] p-1 text-black dark:text-white border rounded'
                     type='number'
+                    onChange={(e) => {
+                      setFPrice(Number(e.target.value))
+                    }}
                     placeholder='Фильтр'
                   />
                 </div>
@@ -202,16 +383,18 @@ const MainPage = () => {
               <TableHead>
                 <div>
                   <p>Район</p>
-                  <Select>
+                  <Select onValueChange={value => {
+                    setFDistrict(value)
+                  }}>
                     <SelectTrigger className='w-[180px]'>
                       <SelectValue placeholder='Выберите' />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectGroup>
                         <SelectLabel>Район</SelectLabel>
-                        <SelectItem value='mirzo'>Мирзо Улугбек</SelectItem>
-                        <SelectItem value='yakkasaray'>Яккасарай</SelectItem>
-                        <SelectItem value='shaykhantahur'>Шайхантахур</SelectItem>
+                        {rayons.map(item => (
+                          <SelectItem key={item} value={item}>{item}</SelectItem>
+                        ))}
                       </SelectGroup>
                     </SelectContent>
                   </Select>
@@ -223,6 +406,9 @@ const MainPage = () => {
                   <Input
                     className='w-[100px] p-1 text-black dark:text-white border rounded'
                     type='number'
+                    onChange={(e) => {
+                      setFRooms(Number(e.target.value))
+                    }}
                     placeholder='Фильтр'
                   />
                 </div>
@@ -233,6 +419,9 @@ const MainPage = () => {
                   <Input
                     className='w-[100px] p-1 text-black dark:text-white border rounded'
                     type='number'
+                    onChange={(e) => {
+                      setFFloors(Number(e.target.value))
+                    }}
                     placeholder='Фильтр'
                   />
                 </div>
@@ -240,15 +429,18 @@ const MainPage = () => {
               <TableHead>
                 <div>
                   <p>Сотрудник</p>
-                  <Select>
+                  <Select onValueChange={value => {
+                    setFUserViaOwner(value)
+                  }}>
                     <SelectTrigger className='w-[180px]'>
                       <SelectValue placeholder='Выберите' />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectGroup>
                         <SelectLabel>Владелец</SelectLabel>
-                        <SelectItem value='ikhtiyor'>Ихтиёр</SelectItem>
-                        <SelectItem value='okhramon'>Охрамон</SelectItem>
+                        {users && users.map(item => (
+                          <SelectItem key={item._id} value={item.fullName}>{item.fullName}</SelectItem>
+                        ))}
                       </SelectGroup>
                     </SelectContent>
                   </Select>
@@ -256,16 +448,16 @@ const MainPage = () => {
               </TableHead>
             </TableRow>
           </TableHeader>
-          <TableBody>
+          <TableBody className='overflow-x-scroll'>
             {houses.length === 0 ? (
               <TableRow className="text-center">
                 <TableCell>У вас пока что нету квартир на продажу</TableCell>
               </TableRow>
             ) : (
-              data.map((item) => (
+              houses.map((item) => (
                 <TableRow key={item.id} className="text-center cursor-pointer">
-                  <TableCell className="font-medium" onClick={() => onOpenViewModal(item._id)}>{item.id}</TableCell>
-                  <TableCell onClick={() => onOpenViewModal(item._id)}>
+                  <TableCell className="font-medium" onClick={() => onOpenViewModal(item._id, 'view')}>{item.id}</TableCell>
+                  <TableCell onClick={() => onOpenViewModal(item._id, 'view')}>
                     {item.files && item.files.length > 0 ? (
                       <Image
                         src={`http://localhost:8080/${item.files[0]}`}
@@ -278,37 +470,208 @@ const MainPage = () => {
                       <div>Нет изображения</div>
                     )}
                   </TableCell>
-                  <TableCell onClick={() => onOpenViewModal(item._id)}>{moment(item.date).format("DD.MM.YYYY")}</TableCell>
-                  <TableCell onClick={() => onOpenViewModal(item._id)}>{item.repair}</TableCell>
-                  <TableCell onClick={() => onOpenViewModal(item._id)} className="uppercase">{`${item.price.toFixed(2)} ${item.valute}`}</TableCell>
-                  <TableCell onClick={() => onOpenViewModal(item._id)}>{item.district}</TableCell>
-                  <TableCell onClick={() => onOpenViewModal(item._id)}>{item.rooms}</TableCell>
-                  <TableCell onClick={() => onOpenViewModal(item._id)}>{item.floor}</TableCell>
+                  <TableCell onClick={() => onOpenViewModal(item._id, 'view')}>{moment(item.date).format("DD.MM.YYYY")}</TableCell>
+                  <TableCell onClick={() => onOpenViewModal(item._id, 'view')}>{item.repair}</TableCell>
+                  <TableCell onClick={() => onOpenViewModal(item._id, 'view')} className="uppercase">{`${item.price.toFixed(2)} ${item.valute}`}</TableCell>
+                  <TableCell onClick={() => onOpenViewModal(item._id, 'view')}>{item.district}</TableCell>
+                  <TableCell onClick={() => onOpenViewModal(item._id, 'view')}>{item.rooms}</TableCell>
+                  <TableCell onClick={() => onOpenViewModal(item._id, 'view')}>{item.floor}</TableCell>
                   <TableCell>{item.employee.fullName}</TableCell>
                   <TableCell>
-                    {user && item.employee._id === user._id ? (
+                    {user && item.employee._id == user._id ? (
                       <div className="flex space-x-3 items-center">
-                        <Dialog>
+                        <Dialog onOpenChange={setIsModalOpen} open={isModalOpen}>
                           <DialogTrigger asChild>
-                            <Button variant="outline" type="button" onClick={() => onEditHouse(item._id)}>
+                            <Button variant="outline" type="button" onClick={() => onOpenViewModal(item._id, 'edit')}>
                               <Edit />
                             </Button>
                           </DialogTrigger>
-                          <DialogContent className="sm:max-w-[425px]">
-                            <DialogHeader>
-                              <DialogTitle>Edit House</DialogTitle>
-                              <DialogDescription>
-                                Make changes to your profile here. Click save when youre done.
-                              </DialogDescription>
-                            </DialogHeader>
-                            <div className="grid gap-4 py-4">
-                            </div>
+                          <DialogContent className="">
+                            <DialogTitle>Edit House</DialogTitle>
+                              <form onSubmit={handleEditData} className=''>
+                            {loading ? (
+                              <h1>Загрузка...</h1>
+                            ) : (
+                              <div className='max-h-[500px]  px-3 py-5 overflow-y-scroll space-y-4'>
+                              <div>
+                                  <label className="block text-sm font-medium">Ремонт</label>
+                                  <Select defaultValue={viewData?.repair} onValueChange={value => setRepair(value)}>
+                                    <SelectTrigger>
+                                      <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectGroup>
+                                        <SelectItem value="Авторский ремонт">Авторский ремонт</SelectItem>
+                                        <SelectItem value="Хайтек">Хайтек</SelectItem>
+                                        <SelectItem value="Новый">Новый</SelectItem>
+                                        <SelectItem value="Евро ремонт">Евро ремонт</SelectItem>
+                                      </SelectGroup>
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                                <div >
+                                  <label className="block text-sm font-medium ">Владелец</label>
+                                  <Select defaultValue={viewData?.userViaOwner} onValueChange={value => setUserViaOwner(value)}>
+                                    <SelectTrigger>
+                                      <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectGroup>
+                                        {users && users.map(item => (
+                                          <SelectItem key={item._id} value={item.fullName}>{item.fullName}</SelectItem>
+                                        ))}
+                                      </SelectGroup>
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                                <div >
+                                  <label className="block text-sm font-medium ">Район</label>
+                                  <Select defaultValue={viewData?.district} onValueChange={value => setDistrict(value)}>
+                                    <SelectTrigger>
+                                      <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectGroup>
+                                        {rayons.map(item => (
+                                          <SelectItem value={item} key={item}>{item}</SelectItem>
+                                        ))}
+                                      </SelectGroup>
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                                <div>
+                                  <label className="block text-sm font-medium mt-3">Адрес</label>
+                                  <Input type="text" placeholder="Введите адрес" value={address} onChange={e => setAddress(e.target.value)} />
+                                </div>
+                                <div>
+                                  <label className="block text-sm font-medium mt-3">Ориентир</label>
+                                  <Input type="text" placeholder="Введите ориентир" value={landmark} onChange={e => setLandmark(e.target.value)} />
+                                </div>
+
+                                <div>
+                                  <label className="block text-sm font-medium">Количество комнат</label>
+                                  <Input type="number" min="1" placeholder="Введите количество комнат" value={rooms} onChange={e => setRooms(Number(e.target.value))} />
+                                </div>
+
+                                <div>
+                                  <label className="block text-sm font-medium">Этаж</label>
+                                  <Input type="number" min="1" placeholder="Введите этаж" value={floors} onChange={(e) => setFloors(Number(e.target.value))} />
+                                </div>
+
+                                <div>
+                                  <label className="block text-sm font-medium">Этажность здания </label>
+                                  <Input type="number" min="1" placeholder="Введите этажность здания" value={numberOfFloorOfTheBuildind} onChange={e => setNumberOfFloorOfTheBuildind(Number(e.target.value))} />
+                                </div>
+
+                                <div>
+                                  <label className="block text-sm font-medium">Площадь m<sup>2</sup></label>
+                                  <Input type="number" min="1" placeholder="Введите площадь кв.м" value={square} onChange={e => setSquare(Number(e.target.value))} />
+                                </div>
+
+                                <div className="flex items-center space-x-2">
+                                  <Checkbox id="conditioner" checked={checkConditioner} onCheckedChange={() => setCheckConditioner(!checkConditioner)} />
+                                  <label
+                                    htmlFor="conditioner"
+                                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                  >
+                                    Кондиционер
+                                  </label>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                  <Checkbox id="tv" checked={tv} onCheckedChange={() => setTv(!tv)} />
+                                  <label
+                                    htmlFor="tv"
+                                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                  >
+                                    Телевизор
+                                  </label>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                  <Checkbox id="Washing-machine" checked={washingMaching} onCheckedChange={() => setWashingMachine(!washingMaching)} />
+                                  <label
+                                    htmlFor="Washing-machine"
+                                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                  >
+                                    Стиральная машина
+                                  </label>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                  <Checkbox id="prepayment" checked={prepayment} onCheckedChange={() => setPrepayment(!prepayment)} />
+                                  <label
+                                    htmlFor="prepayment"
+                                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                  >
+                                    Предоплата
+                                  </label>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                  <Checkbox id="deposit" checked={deposit} onCheckedChange={() => setDeposit(!deposit)} />
+                                  <label
+                                    htmlFor="deposit"
+                                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                  >
+                                    Депозит
+                                  </label>
+                                </div>
+
+                                <div >
+                                  <label
+                                    htmlFor="deposit"
+                                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                  >
+                                    Описание
+                                  </label>
+                                  <Textarea placeholder='Ведтье описание дома' value={description} onChange={(e) => setDescription(e.target.value)} />
+                                </div>
+                                <div>
+                                  <label className="block text-sm font-medium">Цена</label>
+                                  <Input type="number" placeholder="Введите цену" value={price} onChange={e => setPrice(Number(e.target.value))} />
+                                </div>
+
+                                <Select value={valute} onValueChange={value => setValute(value)}>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Выберите волюту" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="usd">USD</SelectItem>
+                                    <SelectItem value="uzs">UZS</SelectItem>
+                                  </SelectContent>
+                                </Select>
+
+                                <div>
+                                  <p>Дата доступности</p>
+                                  <Popover>
+                                    <PopoverTrigger asChild>
+                                      <Button
+                                        variant={"outline"}
+                                        className={cn(
+                                          "w-[200px] justify-start text-left font-normal"
+                                        )}
+                                      >
+                                        <CalendarIcon className="mr-2 h-4 w-4" />
+                                        {$date ? format($date, "PPP") : <span>Выберите дату</span>}
+                                      </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-auto p-0">
+                                      <Calendar
+                                        mode="single"
+                                        selected={$date}
+                                        onSelect={$setDate}
+                                        initialFocus
+                                      />
+                                    </PopoverContent>
+                                  </Popover>
+                              </div>
+                              </div>
+                            )}
+
                             <DialogFooter>
-                              <Button type="submit">Save changes</Button>
+                              <Button variant="destructive" type="button" disabled={loadingWhenDelete} onClick={() => onDeleteHouse(item._id)}>{loadingWhenDelete ? 'Изменение...' : 'Удолить'}</Button>
+                              <Button disabled={$loading} type="submit" >{$loading ? 'Изменение...' : 'Сохранить'}</Button>
                             </DialogFooter>
+                              </form>
                           </DialogContent>
                         </Dialog>
-
                         <Button variant="outline">
                           <Send />
                         </Button>
@@ -321,8 +684,8 @@ const MainPage = () => {
                 </TableRow>
               ))
             )}
-          </TableBody>
-        </Table>
+          </TableBody >
+        </Table >
         <Dialog open={isOpenViewModal} onOpenChange={setIsOpenViewModal}>
           <DialogContent className="max-w-3xl p-6 rounded-2xl bg-white dark:bg-gray-900 shadow-2xl border border-gray-200 dark:border-gray-700">
             <DialogTitle className="text-2xl font-semibold text-center mb-4 text-gray-900 dark:text-white">
@@ -397,8 +760,8 @@ const MainPage = () => {
             </div>
           </DialogContent>
         </Dialog>
-      </form>
-    </div>
+      </form >
+    </div >
   );
 };
 

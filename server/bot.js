@@ -9,19 +9,16 @@ async function sendMessage(message, images) {
 
     const media = images.map((image, index) => ({
       type: "photo",
-      media: `https://ad9f-213-230-78-183.ngrok-free.app/${image}`,
+      media: `https://0a91-95-214-210-105.ngrok-free.app/${image}`,
       caption: index === 0 ? message : undefined,
       parse_mode: "Markdown"
     }));
-
-    console.log(media);
 
     const response = await axios.post(sendMediaGroupUrl, {
       chat_id: chatId,
       media: media,
     });
-
-    console.log("Media group sent:", response.data);
+    return response.data.result[0].message_id
   } catch (error) {
     console.error("Error sending media group:", error.message);
     console.error(error.response?.data);
@@ -30,20 +27,19 @@ async function sendMessage(message, images) {
 }
 
 
-
 async function editMessage(newMessage, messageId) {
   try {
-    const editMessageUrl = `https://api.telegram.org/bot${botToken}/editMessageText`;
+
+    const editMessageUrl = `https://api.telegram.org/bot${botToken}/editMessageCaption`;
     const response = await axios.post(editMessageUrl, {
       chat_id: chatId,
-      message_id: messageId,
-      text: newMessage,
-      parse_mode: 'HTML',
+      message_id: Number(messageId),
+      caption: newMessage,
+      parse_mode: 'Markdown',
     });
-
-    console.log('Message edited successfully:', response.data);
+    return 200
   } catch (error) {
-    console.error('Error editing message:', error.response?.data || error.message);
+    return 400
   }
 }
 

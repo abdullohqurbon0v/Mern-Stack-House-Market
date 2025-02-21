@@ -1,9 +1,8 @@
-import React from 'react'
 
-const Owners = () => {
+const OverviewPage = () => {
   return (
-    <div>Owners</div>
+    <div>OverviewPage</div>
   )
 }
 
-export default Owners
+export default OverviewPage

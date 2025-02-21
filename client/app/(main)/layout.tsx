@@ -1,56 +1,47 @@
 'use client';
-import React, { ChangeEvent, FormEvent, useEffect, useState } from 'react';
-import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import AppSidebar from '@/components/shared/navbar';
-import { ChildProps, IUser } from '@/types';
+import { Input } from '@/components/ui/input';
 import {
   NavigationMenu,
   NavigationMenuContent,
   NavigationMenuItem,
   NavigationMenuList,
   NavigationMenuTrigger,
-} from "@/components/ui/navigation-menu"
-import { Input } from '@/components/ui/input';
-import { Textarea } from "@/components/ui/textarea"
-import { cn } from '@/lib/utils';
+} from "@/components/ui/navigation-menu";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
+import { Textarea } from "@/components/ui/textarea";
+import { cn } from '@/lib/utils';
+import { ChildProps, IUser } from '@/types';
+import { ChangeEvent, FormEvent, useEffect, useState } from 'react';
 
-import {
-  Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb"
-import { CalendarIcon, Home, Plus } from 'lucide-react';
 import { ModeToggle } from '@/components/shared/mode-toggle';
 import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
-import { Checkbox } from '@/components/ui/checkbox';
+  Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList
+} from "@/components/ui/breadcrumb";
 import { Button } from '@/components/ui/button';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { format } from 'date-fns';
 import { Calendar } from '@/components/ui/calendar';
+import { Checkbox } from '@/components/ui/checkbox';
+import {
+  Dialog, DialogClose, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger,
+} from "@/components/ui/dialog";
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { rayons } from '@/constants';
 import { useToast } from '@/hooks/use-toast';
 import { fetchData } from '@/http/api';
-import { useRouter } from 'next/navigation';
 import { useHouseStore } from '@/store/houses';
 import { useUser } from '@/store/user';
-
-
-
-const rayons = ['Bektemir', "Mirzo Ulug'bek", 'Sergeli', 'Shayxontohur', 'Chilonzor', 'Olmazor', 'Mirobod', 'Yashnobod', 'Yunusobod', 'Uchtepa', 'Yakkasaroy', 'Toshkent tumani']
+import { format } from 'date-fns';
+import { motion } from 'framer-motion';
+import { CalendarIcon, Home, Loader2, Plus } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 
 const MainLayout = ({ children }: ChildProps) => {
   const { user, setUserStore } = useUser()
   const { addHouse } = useHouseStore()
   const router = useRouter()
-  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false)
   const [users, setUsers] = useState<IUser[]>([])
   // SELECT VALUES
   const [repair, setRepair] = useState<string>('')
@@ -78,6 +69,7 @@ const MainLayout = ({ children }: ChildProps) => {
   const [prepayment, setPrepayment] = useState<boolean>(false)
   const [deposit, setDeposit] = useState<boolean>(false)
   const [isMounted, setIsMounted] = useState<boolean>(false);
+  const [location, setLocation] = useState<string>('')
 
   // FILES
   const [files, setFiles] = useState<File[]>([]);
@@ -104,6 +96,12 @@ const MainLayout = ({ children }: ChildProps) => {
     localStorage.clear()
     router.push('/signin')
   }
+
+  useEffect(() => {
+    console.log(window.location.pathname)
+    const loc = window.location.pathname
+    setLocation(loc)
+  }, [])
 
   if (!isMounted) return null;
   const handleAddHome = async (e: FormEvent<HTMLFormElement>) => {
@@ -144,15 +142,17 @@ const MainLayout = ({ children }: ChildProps) => {
       }
 
       const res = await fetchData.post('/create-house', formData);
-      if (res.status === 200) {
-        addHouse(res.data.house)
-      }
+      console.log(res)
+      addHouse(res.data.house)
       setLoading(false);
+      setIsModalOpen(false)
     } catch (error) {
       console.log(error);
       toast({
         title: "Ошибка",
+        variant: "destructive",
         description: "Ошибка с сервером, пожалуйста, попытайтесь заново",
+        duration:2000
       });
       setLoading(false);
     }
@@ -208,9 +208,8 @@ const MainLayout = ({ children }: ChildProps) => {
               <BreadcrumbItem>
                 <BreadcrumbLink href="/"><Home /></BreadcrumbLink>
               </BreadcrumbItem>
-              <BreadcrumbSeparator />
               <BreadcrumbItem>
-                <BreadcrumbPage>Breadcrumb</BreadcrumbPage>
+                <BreadcrumbLink href="/">{location}</BreadcrumbLink>
               </BreadcrumbItem>
             </BreadcrumbList>
           </Breadcrumb>
@@ -297,7 +296,7 @@ const MainLayout = ({ children }: ChildProps) => {
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium">Площадь</label>
+                        <label className="block text-sm font-medium">Площадь m<sup>2</sup></label>
                         <Input type="number" min="1" placeholder="Введите площадь кв.м" value={square} onChange={(e) => setSquare(e.target.value)} />
                       </div>
 
@@ -354,7 +353,7 @@ const MainLayout = ({ children }: ChildProps) => {
                           >
                             Описание
                           </label>
-                          <Textarea placeholder='"Ведтье описание дома' value={description} onChange={e => setDescription(e.target.value)} />
+                          <Textarea placeholder='Ведтье описание дома' value={description} onChange={e => setDescription(e.target.value)} />
                         </div>
                         <div>
                           <label className="block text-sm font-medium">Цена</label>
@@ -413,7 +412,21 @@ const MainLayout = ({ children }: ChildProps) => {
                       <DialogClose asChild>
                         <Button variant="outline" type="button">Отмена</Button>
                       </DialogClose>
-                      <Button type="submit">{loading ? 'Загрузка...' : 'Создать'}</Button>
+                      <Button type="submit" disabled={loading}>
+                        {loading ? (
+                          <motion.span
+                            className="flex items-center space-x-2"
+                            initial={{ opacity: 0.5, scale: 0.9 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            transition={{ duration: 0.5, repeat: Infinity, repeatType: "mirror" }}
+                          >
+                            <Loader2 className="w-5 h-5 animate-spin" />
+                            <span>Загрузка...</span>
+                          </motion.span>
+                        ) : (
+                          "Создать"
+                        )}
+                      </Button>
                     </div>
                   </form>
                 </div>
