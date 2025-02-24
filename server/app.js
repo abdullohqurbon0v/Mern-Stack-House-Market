@@ -13,7 +13,7 @@ const FileService = require('./file')
 const cookieParser = require('cookie-parser')
 const fileUpload = require('express-fileupload')
 const bodyParser = require('body-parser');
-const { all } = require('axios');
+const Owners = require('./models/Owners')
 
 
 const app = express();
@@ -159,6 +159,7 @@ app.post('/api/create-house', tokenValidation, async (req, res) => {
       description,
       square,
       date,
+      owner,
       floor,
       rooms,
       numberOfFloorOfTheBuildind,
@@ -170,25 +171,30 @@ app.post('/api/create-house', tokenValidation, async (req, res) => {
       deposit,
     } = req.body;
 
-    console.log(Boolean(washingMaching))
-    console.log(Boolean(tv))
-    console.log(Boolean(deposit))
-    console.log(Boolean(prepayment))
-    console.log(Boolean(checkConditioner))
+    console.log(Boolean(washingMaching));
+    console.log(Boolean(tv));
+    console.log(Boolean(deposit));
+    console.log(Boolean(prepayment));
+    console.log(Boolean(checkConditioner));
 
     let uploadedFiles = [];
     if (req.files && req.files['files[]']) {
       const files = Array.isArray(req.files['files[]']) ? req.files['files[]'] : [req.files['files[]']];
-      uploadedFiles = files.map(file => FileService.save(file));
+      uploadedFiles = await Promise.all(files.map(file => FileService.save(file)));
     }
-    const selectedDate = new Date(date)
+
+    const selectedDate = new Date(date);
     const parsetDate = selectedDate.toLocaleString('uz-UZ', {
-      year: "numeric",
-      month: "numeric",
-      day: "numeric"
-    })
+      year: 'numeric',
+      month: 'numeric',
+      day: 'numeric',
+    });
+    console.log(parsetDate)
+
     const allHouses = await House.find();
     const newId = allHouses.length + 1;
+
+
     const message = `
 ✨✨✨ СДАЁТСЯ ✨✨✨
 
@@ -203,7 +209,7 @@ app.post('/api/create-house', tokenValidation, async (req, res) => {
 • Площадь: ${square} м²
 • Количество комнат: ${rooms}
 • Этаж: ${floor}
-• Этажность: ${{numberOfFloorOfTheBuildind}}
+• Этажность: ${numberOfFloorOfTheBuildind}
 • Ремонт: ${repair}
 • Описание: ${description}
 
@@ -214,15 +220,13 @@ app.post('/api/create-house', tokenValidation, async (req, res) => {
 
 Способы оплаты:
 💸 Предоплата: ${prepayment == 'true' ? 'Да' : 'Нет'}
-💳 Депозит: ${deposit == 'trur' ? `Да` : 'Нет'}
+💳 Депозит: ${deposit == 'true' ? 'Да' : 'Нет'}
 💰 Цена: ${price}${valute}
 
-📅 Дата: ${parsetDate}
+📅 Дата: ${date}
 `;
 
     const messageId = await sendMessage(message, uploadedFiles);
-    console.log(messageId);
-
     const newHouse = await House.create({
       employee: user.id,
       address,
@@ -236,32 +240,33 @@ app.post('/api/create-house', tokenValidation, async (req, res) => {
       numberOfFloorOfTheBuildind: Number(numberOfFloorOfTheBuildind),
       price: Number(price),
       repair,
+      owner,
       userViaOwner,
       valute,
-      checkConditioner: checkConditioner,
-      tv: tv,
-      washingMaching: washingMaching,
-      prepayment: prepayment,
-      deposit: deposit,
+      checkConditioner,
+      tv,
+      washingMaching,
+      prepayment,
+      deposit,
       files: uploadedFiles,
       messageId,
       id: newId,
     });
 
-    return res.status(200).json({ message: "House created successfully", house: newHouse });
+    return res.status(200).json({ message: 'House created successfully', house: newHouse });
   } catch (error) {
     console.error('Error:', error);
-    return res.status(500).json({ message: "Something went wrong. Try again later.", });
+    return res.status(500).json({ message: 'Something went wrong. Try again later.' });
   }
 });
 
 app.put('/api/edit-house/:id', tokenValidation, async (req, res) => {
   try {
-    const { id  } = req.params
-    const {repair, address, userViaOwner, valute, landmark, district, description, square, date, floor, rooms, numberOfFloorOfTheBuildind, price, checkConditioner, tv, washingMaching, prepayment, deposit} = req.body
+    const { id } = req.params
+    const { repair, address, userViaOwner, valute, landmark, district, description, square, date, floor, rooms, numberOfFloorOfTheBuildind, price, checkConditioner, tv, washingMaching, prepayment, deposit } = req.body
     const { user } = req.user;
     const house = await House.findById(id)
-    if(!repair || !address || !userViaOwner || !landmark || !valute || !district || !description || !square || !date || !floor || !rooms || !numberOfFloorOfTheBuildind || !price || !checkConditioner || !tv || !washingMaching || !prepayment || !deposit) {
+    if (!repair || !address || !userViaOwner || !landmark || !valute || !district || !description || !square || !date || !floor || !rooms || !numberOfFloorOfTheBuildind || !price || !checkConditioner || !tv || !washingMaching || !prepayment || !deposit) {
       return res.status(400).json({
         message: "Все поля нужно ввести"
       })
@@ -277,7 +282,7 @@ app.put('/api/edit-house/:id', tokenValidation, async (req, res) => {
       repair,
       address,
       userViaOwner,
-      landmark,valute,district,description,square,date,floor,rooms,numberOfFloorOfTheBuildind,price,checkConditioner,tv,washingMaching,prepayment,deposit
+      landmark, valute, district, description, square, date, floor, rooms, numberOfFloorOfTheBuildind, price, checkConditioner, tv, washingMaching, prepayment, deposit
     }, {
       new: true
     })
@@ -312,7 +317,7 @@ app.put('/api/edit-house/:id', tokenValidation, async (req, res) => {
 📅 Дата: ${readableData}
 `;
     const response = await editMessage(message, house.messageId);
-    return res.status(200).json({ message: "Вашы данные изменены.", house: edited,status:response });
+    return res.status(200).json({ message: "Вашы данные изменены.", house: edited, status: response });
   } catch (error) {
     console.error('Error:', error);
     return res.status(500).json({ message: "Something went wrong. Try again later." });
@@ -325,7 +330,6 @@ app.delete('/api/remove-house/:id', tokenValidation, async (req, res) => {
     const deletedHouse = await House.findByIdAndDelete(id);
 
     await removeMessage(deletedHouse.messageId)
-
     if (!deletedHouse) {
       return res.status(404).json({ message: "House not found" });
     }
@@ -368,7 +372,7 @@ app.put('/api/filter-houses', async (req, res) => {
     if (floor && floor !== '0') filter.floor = Number(floor);
     if (userViaOwner) filter.userViaOwner = userViaOwner;
 
-      const houses = await House.find(filter).populate('employee')
+    const houses = await House.find(filter).populate('employee')
 
     return res.status(200).json({
       message: "Filter applied successfully",
@@ -377,11 +381,77 @@ app.put('/api/filter-houses', async (req, res) => {
   } catch (error) {
     console.error(error);
     return res.status(500).json({
-      message: "Something went wrong. Please try again later",
+      message: "Ошибка с сервером. Попытайтесь заново",
     });
   }
 });
 
+app.post('/api/create-owner', tokenValidation, async (req, res) => {
+  try {
+    const { name, phone } = req.body
+    if (!name || !phone) {
+      return res.status(400).json({
+        message: "Все поля нужно ввести"
+      })
+    }
+
+    // const isExistuser = await Owners.findOne({ phone })
+    // if (isExistuser) {
+    //   return res.status(400).json({
+    //     message: "пользователь с этим именем "
+    //   })
+    // }
+    const users = await Owners.find()
+    const createduser = await Owners.create({ id: users.length + 1, name, phone: `+998 ${phone}` })
+
+    return res.status(200).json({
+      message: "Пользователь создан",
+      owner: createduser
+    })
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({
+      message: "Something went wrong"
+    })
+  }
+})
+
+app.get('/api/get-owners', tokenValidation, async (req, res) => {
+  try {
+    const users = await Owners.find()
+    return res.status(200).json({
+      message: "пользователи найдены",
+      owners: users
+    })
+  } catch (error) {
+    console.log(error)
+    return res.status(500).json({
+      message: "Ошибка с серверос. Попытайтесь заново"
+    })
+  }
+})
+app.put('/api/filter-owners', tokenValidation, async (req, res) => {
+  try {
+    const { name, phone } = req.body;
+
+    const filter = {};
+
+    if (name) filter.name = { $regex: name.trim(), $options: 'i' };
+    if (phone) filter.phone = { $regex: phone.trim(), $options: 'i' };
+
+    const foundOwners = await Owners.find(filter);
+
+    return res.status(200).json({
+      message: "Пользователи найдены",
+      owners: foundOwners
+    });
+
+  } catch (error) {
+    return res.status(500).json({
+      message: "Ошибка сервера. Попробуйте снова"
+    });
+  }
+});
 
 mongoose.connect(process.env.MONGO_URL)
   .then(() => {

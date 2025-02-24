@@ -35,3 +35,10 @@ export interface IHouse {
   updatedAt: string;
   createdAt: string
 }
+
+
+export interface OwnersTypes {
+  name: string,
+  phone: string,
+  _id: string
+}

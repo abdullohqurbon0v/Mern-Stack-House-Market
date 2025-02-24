@@ -19,11 +19,6 @@ const items = [
     icon: Home,
   },
   {
-    title: "Квартиры на продажу",
-    url: "/for-sale",
-    icon: Inbox,
-  },
-  {
     title: "Владельцы",
     url: "/owners",
     icon: Calendar,

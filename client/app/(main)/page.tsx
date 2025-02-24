@@ -3,7 +3,7 @@
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Dialog, DialogContent, DialogFooter, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -16,19 +16,21 @@ import { fetchData } from '@/http/api';
 import { cn } from '@/lib/utils';
 import { useHouseStore } from '@/store/houses';
 import { useUser } from '@/store/user';
-import { IHouse, IUser } from '@/types';
+import { IHouse, IUser, OwnersTypes } from '@/types';
 import { format } from 'date-fns';
-import { Calendar as CalendarIcon, Edit, Send } from 'lucide-react';
+import { Calendar as CalendarIcon, Edit, Loader2, Plus, Send } from 'lucide-react';
 import moment from 'moment';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { FormEvent, useEffect, useState } from 'react';
+import { ChangeEvent, FormEvent, useEffect, useState } from 'react';
+import { motion } from 'framer-motion'
 
 const MainPage = () => {
   const { toast } = useToast()
   const { user } = useUser()
-  const { houses, setAllHouses } = useHouseStore()
+  const { houses, setAllHouses, addHouse } = useHouseStore()
   const router = useRouter();
+  const [owners, setOwners] = useState<OwnersTypes[]>([])
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
   const [totalItems, setTotalItems] = useState(0);
@@ -40,9 +42,8 @@ const MainPage = () => {
   const [$loading, $setLoading] = useState<boolean>(false)
   const [selectedEditHouse, setSelectedEditHouse] = useState<string>('')
   const [loadingWhenDelete, setLoadingWhenDelete] = useState<boolean>(false)
-
   // DATE
-  const [$date, $setDate] = useState<Date>( );
+  const [$date, $setDate] = useState<Date>();
   // CHECKBOX
   const [checkConditioner, setCheckConditioner] = useState<boolean>(false)
   const [tv, setTv] = useState<boolean>(false)
@@ -67,6 +68,7 @@ const MainPage = () => {
   const [userViaOwner, setUserViaOwner] = useState<string>('')
   const [district, setDistrict] = useState<string>('')
   const [valute, setValute] = useState<string>('')
+  const [selectOwners, setSelectOwners] = useState<string>('')
 
   // FILTER
   const [fId, setFId] = useState<number>(0)
@@ -77,6 +79,96 @@ const MainPage = () => {
   const [fRooms, setFRooms] = useState(0)
   const [fFloors, setFFloors] = useState(0)
   const [fUserViaOwner, setFUserViaOwner] = useState('')
+
+  // ADD STATES
+  const [aRepair, setARepair] = useState<string>('')
+  const [aUserViaOwner, setAUserViaOwner] = useState<string>('')
+  const [aDistrict, setADistrict] = useState<string>('')
+  const [Aaddress, setAaddress] = useState<string>('')
+  const [aLandmark, setALandmark] = useState<string>('')
+  const [aRooms, setARooms] = useState<number>(0)
+  const [aFloor, setAFloor] = useState<number>(0)
+  const [AnumberOfFloorOfTheBuildind, setANumberOfFloorOfTheBuildind] = useState<number>(0)
+  const [aSquare, setAsquare] = useState<string>('')
+  const [aCheckconditioner, setAcheckconditioner] = useState<boolean>(false)
+  const [ATV, setATV] = useState<boolean>(false)
+  const [AwashingMachine, setAWashingMachine] = useState<boolean>(false)
+  const [APrepayment, setAPrepayment] = useState<boolean>(false)
+  const [ADeposit, setADeposit] = useState<boolean>(false)
+  const [ADescription, setADescription] = useState<string>('')
+  const [Aprice, setAPrice] = useState<string>('')
+  const [AValute, setAValute] = useState<string>('')
+  const [Adate, setADate] = useState<Date>()
+
+  const [addLoading, setAddloading] = useState(false)
+
+  const [files, setFiles] = useState<File[]>([]);
+  const [isModalAddOpen, setIsModalAddOpen] = useState<boolean>(false)
+
+
+
+  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files) {
+      const selectedFiles = Array.from(event.target.files);
+      setFiles(selectedFiles);
+    }
+  };
+
+  const handleAddHome = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setAddloading(true);
+    try {
+      if (!aRepair || !Aaddress || !aDistrict || !aUserViaOwner || !AValute || !aLandmark || !ADescription || !aSquare || !Adate || !aRooms || !AnumberOfFloorOfTheBuildind || !Aprice || !files) {
+        setAddloading(false);
+        return toast({
+          title: "Ошибка",
+          description: "Нужно ввести все данные !!",
+        });
+      }
+      const formData = new FormData();
+      formData.append("repair", aRepair);
+      formData.append("address", Aaddress);
+      formData.append("userViaOwner", aUserViaOwner);
+      formData.append("valute", AValute);
+      formData.append("landmark", aLandmark);
+      formData.append("district", aDistrict);
+      formData.append("description", ADescription);
+      formData.append("square", aSquare.toString());
+      formData.append("date", Adate.toISOString());
+      formData.append("floor", aFloor.toString());
+      formData.append("rooms", aRooms.toString());
+      formData.append("numberOfFloorOfTheBuildind", AnumberOfFloorOfTheBuildind.toString());
+      formData.append("price", Aprice.toString());
+      formData.append("checkConditioner", aCheckconditioner.toString());
+      formData.append("tv", ATV.toString());
+      formData.append("washingMaching", AwashingMachine.toString());
+      formData.append("prepayment", APrepayment.toString());
+      formData.append("deposit", ADeposit.toString());
+      formData.append('owner', selectOwners)
+
+      if (files && files.length > 0) {
+        Array.from(files).forEach((file) => {
+          formData.append("files[]", file);
+        });
+      }
+
+      const res = await fetchData.post('/create-house', formData);
+      console.log(res)
+      addHouse(res.data.house)
+      setAddloading(false);
+      setIsModalAddOpen(false)
+    } catch (error) {
+      console.log(error);
+      toast({
+        title: "Ошибка",
+        variant: "destructive",
+        description: "Ошибка с сервером, пожалуйста, попытайтесь заново",
+        duration: 2000
+      });
+      setAddloading(false);
+    }
+  };
+
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -89,6 +181,9 @@ const MainPage = () => {
       const res = await fetchData.get('/get-all-users')
       setUsers(res.data.users)
       console.log("All housess  ", response)
+      const responseowners = await fetchData.get('/get-owners')
+      console.log(responseowners)
+      setOwners(responseowners.data.owners)
       setTotalItems(response.data.data.length);
     }
     getHouses()
@@ -155,13 +250,13 @@ const MainPage = () => {
     event.preventDefault()
     $setLoading(true)
     try {
-        // if (!repair || !address || !userViaOwner || !valute || !landmark || !description || !square || !date || !rooms || !price || !files) {
-        //   setLoading(false);
-        //   return toast({
-        //     title: "Ошибка",
-        //     description: "Нужно ввести все данные !!",
-        //   });
-        // }
+      // if (!repair || !address || !userViaOwner || !valute || !landmark || !description || !square || !date || !rooms || !price || !files) {
+      //   setLoading(false);
+      //   return toast({
+      //     title: "Ошибка",
+      //     description: "Нужно ввести все данные !!",
+      //   });
+      // }
       const formData = new FormData()
       formData.append("repair", repair);
       formData.append("address", address);
@@ -171,13 +266,15 @@ const MainPage = () => {
       formData.append("district", district);
       formData.append("description", description);
       formData.append("square", square.toString());
-      const parsedDate = new Date($date);
-      if (isNaN(parsedDate.getTime())) {
-          console.error("Invalid date format:", $date);
-          $setLoading(false)
+      if (date) {
+        const parsedDate = new Date(date);
+        if (isNaN(parsedDate.getTime())) {
+          console.error("Invalid date format:", date);
+          setLoading(false);
           return;
+        }
+        formData.append("date", parsedDate.toISOString());
       }
-      formData.append("date", parsedDate.toISOString());
       formData.append("floor", floors.toString());
       formData.append("rooms", rooms.toString());
       formData.append("numberOfFloorOfTheBuildind", numberOfFloorOfTheBuildind.toString());
@@ -212,7 +309,7 @@ const MainPage = () => {
     try {
       const response = await fetchData.delete(`/remove-house/${id}`)
       console.log(response)
-       toast({
+      toast({
         title: "Успех",
         description: "Успех данные были удолены",
         duration: 3000
@@ -221,7 +318,7 @@ const MainPage = () => {
       setIsModalOpen(false)
     } catch (error) {
       console.log(error)
-       toast({
+      toast({
         title: "Ошибка",
         variant: "destructive",
         description: "Ошибка с сервером, пожалуйста, попытайтесь заново",
@@ -245,7 +342,7 @@ const MainPage = () => {
       const response = await fetchData.put('/filter-houses', formData);
       setAllHouses(response.data.houses)
     } catch (error: any) {
-      if(error.status === 400) {
+      if (error.status === 400) {
         return
       }
       toast({
@@ -258,22 +355,255 @@ const MainPage = () => {
 
   useEffect(() => {
     handleChangeData()
-  }, [fId, date, fRepair, fPrice, fDistrict,fRooms, fFloors, fUserViaOwner])
+  }, [fId, date, fRepair, fPrice, fDistrict, fRooms, fFloors, fUserViaOwner])
 
-  const onRemoveFieldData =  () => {
+  const onRemoveFieldData = () => {
 
   }
 
+  const handleOpenModal = () => {
 
+  }
   return (
     <div className='flex flex-col space-y-2'>
       <div className='flex justify-between'>
         <div className='flex items-center space-x-5'>
           <Button onClick={onRemoveFieldData}>Очистить фильтр</Button>
-          <p>Интервал: 1 - {totalItems}</p>
+          <p>Интервал: 1 - {itemsPerPage}</p>
           <p>Всего: {totalItems}</p>
         </div>
         <div>
+          <Dialog open={isModalAddOpen} onOpenChange={setIsModalAddOpen}>
+            <DialogTrigger onClick={handleOpenModal} className="absolute left-[95%] top-[91%] border p-3 rounded-xl hover:bg-slate-900 transition-all z-50">
+              <Plus />
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Создать новую квартиру</DialogTitle>
+                <DialogDescription asChild>
+                  <div>
+                    <form onSubmit={handleAddHome}>
+                      <div className='max-h-[500px] px-3 py-5 overflow-y-scroll space-y-4'>
+                        <div>
+                          <label className="block text-sm font-medium">Ремонт</label>
+                          <Select onValueChange={value => setARepair(value)}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Тип ремонта" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Авторский ремонт">Авторский ремонт</SelectItem>
+                              <SelectItem value="Хайтек">Хайтек</SelectItem>
+                              <SelectItem value="Новый">Новый</SelectItem>
+                              <SelectItem value="Евро ремонт">Евро ремонт</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium">Сотрудник</label>
+                          <Select onValueChange={(value) => setAUserViaOwner(value)}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Выберите сотрудника " />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <form className='flex flex-col space-y-3'>
+                                {users?.map(item => (
+                                  <SelectItem key={item._id} value={item.fullName}>{item.fullName}</SelectItem>
+                                ))}
+                              </form>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium">Владелец</label>
+                          <Select onValueChange={(value) => setSelectOwners(value)}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Выберите владельца" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <form className='flex flex-col space-y-3'>
+                                {owners?.map(item => (
+                                  <SelectItem key={item._id} value={item.name}>{item.name}</SelectItem>
+                                ))}
+                              </form>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium">Район</label>
+                          <Select onValueChange={(value) => setADistrict(value)}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Выберите" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {rayons.map(item => (
+                                <SelectItem key={item} value={item}>{item}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium">Адрес</label>
+                          <Input type="text" placeholder="Введите адрес" value={Aaddress} onChange={(e) => setAaddress(e.target.value)} />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium">Ориентир</label>
+                          <Input type="text" placeholder="Введите ориентир" value={aLandmark} onChange={(e) => setALandmark(e.target.value)} />
+                        </div>
+
+
+                        <div>
+                          <label className="block text-sm font-medium">Количество комнат</label>
+                          <Input type="number" min="1" placeholder="Введите количество комнат" value={aRooms} onChange={e => setARooms(Number(e.target.value))} />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium">Этаж</label>
+                          <Input type="number" min="1" placeholder="Введите этаж" value={aFloor} onChange={e => setAFloor(Number(e.target.value))} />
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium">Этажность здания</label>
+                          <Input type="number" min="1" placeholder="Введите этажность здания" value={AnumberOfFloorOfTheBuildind} onChange={(e) => setANumberOfFloorOfTheBuildind(Number(e.target.value))} />
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium">Площадь m<sup>2</sup></label>
+                          <Input type="number" min="1" placeholder="Введите площадь кв.м" value={aSquare} onChange={(e) => setAsquare(e.target.value)} />
+                        </div>
+
+                        <div className='flex flex-col space-y-5'>
+                          <div className="flex items-center space-x-2">
+                            <Checkbox id="conditioner" checked={aCheckconditioner} onCheckedChange={() => setAcheckconditioner(!aCheckconditioner)} />
+                            <label
+                              htmlFor="conditioner"
+                              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                            >
+                              Кондиционер
+                            </label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <Checkbox id="tv" checked={ATV} onCheckedChange={() => setATV(!ATV)} />
+                            <label
+                              htmlFor="tv"
+                              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                            >
+                              Телевизор
+                            </label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <Checkbox id="Washing-machine" checked={AwashingMachine} onCheckedChange={() => setAWashingMachine(!AwashingMachine)} />
+                            <label
+                              htmlFor="Washing-machine"
+                              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                            >
+                              Стиральная машина
+                            </label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <Checkbox id="prepayment" checked={APrepayment} onCheckedChange={() => setAPrepayment(!APrepayment)} />
+                            <label
+                              htmlFor="prepayment"
+                              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                            >
+                              Предоплата
+                            </label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <Checkbox id="deposit" checked={ADeposit} onCheckedChange={() => setADeposit(!ADeposit)} />
+                            <label
+                              htmlFor="deposit"
+                              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                            >
+                              Депозит
+                            </label>
+                          </div>
+                          <div >
+                            <label
+                              htmlFor="deposit"
+                              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                            >
+                              Описание
+                            </label>
+                            <Textarea placeholder='Ведтье описание дома' value={ADescription} onChange={e => setADescription(e.target.value)} />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium">Цена</label>
+                            <Input type="number" placeholder="Введите цену" value={Aprice} onChange={(e) => setAPrice(e.target.value)} />
+                          </div>
+                          <Select onValueChange={value => setAValute(value)}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Выберите волюту" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="usd">USD</SelectItem>
+                              <SelectItem value="uzs">UZS</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <div>
+                            <p>Дата доступности</p>
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <Button
+                                  variant={"outline"}
+                                  className={cn(
+                                    "w-[200px] justify-start text-left font-normal",
+                                    !Adate && "text-muted-foreground"
+                                  )}
+                                >
+                                  <CalendarIcon className="mr-2 h-4 w-4" />
+                                  {Adate ? format(Adate, "PPP") : <span>Выберите дату</span>}
+                                </Button>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-auto p-0">
+                                <Calendar
+                                  mode="single"
+                                  selected={Adate}
+                                  onSelect={setADate}
+                                  initialFocus
+                                />
+                              </PopoverContent>
+                            </Popover>
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium">Изображение</label>
+                            <Input type="file" multiple onChange={handleFileChange} />
+                            {files.length > 0 && (
+                              <ul className="mt-2">
+                                {files.map((file, index) => (
+                                  <li key={index} className="text-sm">
+                                    {file.name}
+                                  </li>
+                                ))}
+                              </ul>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex justify-end space-x-2">
+                        <DialogClose asChild>
+                          <Button variant="outline" type="button">Отмена</Button>
+                        </DialogClose>
+                        <Button type="submit" disabled={addLoading}>
+                          {addLoading ? (
+                            <motion.span
+                              className="flex items-center space-x-2"
+                              initial={{ opacity: 0.5, scale: 0.9 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              transition={{ duration: 0.5, repeat: Infinity, repeatType: "mirror" }}
+                            >
+                              <Loader2 className="w-5 h-5 animate-spin" />
+                              <span>Загрузка...</span>
+                            </motion.span>
+                          ) : (
+                            "Создать"
+                          )}
+                        </Button>
+                      </div>
+                    </form>
+                  </div>
+                </DialogDescription>
+              </DialogHeader>
+            </DialogContent>
+          </Dialog>
 
           <Pagination>
             <PaginationContent>
@@ -358,8 +688,8 @@ const MainPage = () => {
                     <SelectContent>
                       <SelectGroup>
                         <SelectLabel>Тип ремонта</SelectLabel>
-                         <SelectItem value="Авторский ремонт">Авторский ремонт</SelectItem>
-                         <SelectItem value="Хайтек">Хайтек</SelectItem>
+                        <SelectItem value="Авторский ремонт">Авторский ремонт</SelectItem>
+                        <SelectItem value="Хайтек">Хайтек</SelectItem>
                         <SelectItem value="Новый">Новый</SelectItem>
                         <SelectItem value="Евро ремонт">Евро ремонт</SelectItem>
                       </SelectGroup>
@@ -446,6 +776,26 @@ const MainPage = () => {
                   </Select>
                 </div>
               </TableHead>
+              <TableHead>
+                <div>
+                  <p>Сотрудник</p>
+                  <Select onValueChange={value => {
+                    setFUserViaOwner(value)
+                  }}>
+                    <SelectTrigger className='w-[180px]'>
+                      <SelectValue placeholder='Выберите' />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        <SelectLabel>Владелец</SelectLabel>
+                        {owners && owners.map(item => (
+                          <SelectItem key={item._id} value={item.phone}>{item.phone}</SelectItem>
+                        ))}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody className='overflow-x-scroll'>
@@ -477,6 +827,7 @@ const MainPage = () => {
                   <TableCell onClick={() => onOpenViewModal(item._id, 'view')}>{item.rooms}</TableCell>
                   <TableCell onClick={() => onOpenViewModal(item._id, 'view')}>{item.floor}</TableCell>
                   <TableCell>{item.employee.fullName}</TableCell>
+                  <TableCell>{item.employee.fullName}</TableCell>
                   <TableCell>
                     {user && item.employee._id == user._id ? (
                       <div className="flex space-x-3 items-center">
@@ -488,188 +839,188 @@ const MainPage = () => {
                           </DialogTrigger>
                           <DialogContent className="">
                             <DialogTitle>Edit House</DialogTitle>
-                              <form onSubmit={handleEditData} className=''>
-                            {loading ? (
-                              <h1>Загрузка...</h1>
-                            ) : (
-                              <div className='max-h-[500px]  px-3 py-5 overflow-y-scroll space-y-4'>
-                              <div>
-                                  <label className="block text-sm font-medium">Ремонт</label>
-                                  <Select defaultValue={viewData?.repair} onValueChange={value => setRepair(value)}>
+                            <form onSubmit={handleEditData} className=''>
+                              {loading ? (
+                                <h1>Загрузка...</h1>
+                              ) : (
+                                <div className='max-h-[500px]  px-3 py-5 overflow-y-scroll space-y-4'>
+                                  <div>
+                                    <label className="block text-sm font-medium">Ремонт</label>
+                                    <Select defaultValue={viewData?.repair} onValueChange={value => setRepair(value)}>
+                                      <SelectTrigger>
+                                        <SelectValue />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectGroup>
+                                          <SelectItem value="Авторский ремонт">Авторский ремонт</SelectItem>
+                                          <SelectItem value="Хайтек">Хайтек</SelectItem>
+                                          <SelectItem value="Новый">Новый</SelectItem>
+                                          <SelectItem value="Евро ремонт">Евро ремонт</SelectItem>
+                                        </SelectGroup>
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
+                                  <div >
+                                    <label className="block text-sm font-medium ">Владелец</label>
+                                    <Select defaultValue={viewData?.userViaOwner} onValueChange={value => setUserViaOwner(value)}>
+                                      <SelectTrigger>
+                                        <SelectValue />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectGroup>
+                                          {users && users.map(item => (
+                                            <SelectItem key={item._id} value={item.fullName}>{item.fullName}</SelectItem>
+                                          ))}
+                                        </SelectGroup>
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
+                                  <div >
+                                    <label className="block text-sm font-medium ">Район</label>
+                                    <Select defaultValue={viewData?.district} onValueChange={value => setDistrict(value)}>
+                                      <SelectTrigger>
+                                        <SelectValue />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectGroup>
+                                          {rayons.map(item => (
+                                            <SelectItem value={item} key={item}>{item}</SelectItem>
+                                          ))}
+                                        </SelectGroup>
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
+                                  <div>
+                                    <label className="block text-sm font-medium mt-3">Адрес</label>
+                                    <Input type="text" placeholder="Введите адрес" value={address} onChange={e => setAddress(e.target.value)} />
+                                  </div>
+                                  <div>
+                                    <label className="block text-sm font-medium mt-3">Ориентир</label>
+                                    <Input type="text" placeholder="Введите ориентир" value={landmark} onChange={e => setLandmark(e.target.value)} />
+                                  </div>
+
+                                  <div>
+                                    <label className="block text-sm font-medium">Количество комнат</label>
+                                    <Input type="number" min="1" placeholder="Введите количество комнат" value={rooms} onChange={e => setRooms(Number(e.target.value))} />
+                                  </div>
+
+                                  <div>
+                                    <label className="block text-sm font-medium">Этаж</label>
+                                    <Input type="number" min="1" placeholder="Введите этаж" value={floors} onChange={(e) => setFloors(Number(e.target.value))} />
+                                  </div>
+
+                                  <div>
+                                    <label className="block text-sm font-medium">Этажность здания </label>
+                                    <Input type="number" min="1" placeholder="Введите этажность здания" value={numberOfFloorOfTheBuildind} onChange={e => setNumberOfFloorOfTheBuildind(Number(e.target.value))} />
+                                  </div>
+
+                                  <div>
+                                    <label className="block text-sm font-medium">Площадь m<sup>2</sup></label>
+                                    <Input type="number" min="1" placeholder="Введите площадь кв.м" value={square} onChange={e => setSquare(Number(e.target.value))} />
+                                  </div>
+
+                                  <div className="flex items-center space-x-2">
+                                    <Checkbox id="conditioner" checked={checkConditioner} onCheckedChange={() => setCheckConditioner(!checkConditioner)} />
+                                    <label
+                                      htmlFor="conditioner"
+                                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                    >
+                                      Кондиционер
+                                    </label>
+                                  </div>
+                                  <div className="flex items-center space-x-2">
+                                    <Checkbox id="tv" checked={tv} onCheckedChange={() => setTv(!tv)} />
+                                    <label
+                                      htmlFor="tv"
+                                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                    >
+                                      Телевизор
+                                    </label>
+                                  </div>
+                                  <div className="flex items-center space-x-2">
+                                    <Checkbox id="Washing-machine" checked={washingMaching} onCheckedChange={() => setWashingMachine(!washingMaching)} />
+                                    <label
+                                      htmlFor="Washing-machine"
+                                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                    >
+                                      Стиральная машина
+                                    </label>
+                                  </div>
+                                  <div className="flex items-center space-x-2">
+                                    <Checkbox id="prepayment" checked={prepayment} onCheckedChange={() => setPrepayment(!prepayment)} />
+                                    <label
+                                      htmlFor="prepayment"
+                                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                    >
+                                      Предоплата
+                                    </label>
+                                  </div>
+                                  <div className="flex items-center space-x-2">
+                                    <Checkbox id="deposit" checked={deposit} onCheckedChange={() => setDeposit(!deposit)} />
+                                    <label
+                                      htmlFor="deposit"
+                                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                    >
+                                      Депозит
+                                    </label>
+                                  </div>
+
+                                  <div >
+                                    <label
+                                      htmlFor="deposit"
+                                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                    >
+                                      Описание
+                                    </label>
+                                    <Textarea placeholder='Ведтье описание дома' value={description} onChange={(e) => setDescription(e.target.value)} />
+                                  </div>
+                                  <div>
+                                    <label className="block text-sm font-medium">Цена</label>
+                                    <Input type="number" placeholder="Введите цену" value={price} onChange={e => setPrice(Number(e.target.value))} />
+                                  </div>
+
+                                  <Select value={valute} onValueChange={value => setValute(value)}>
                                     <SelectTrigger>
-                                      <SelectValue />
+                                      <SelectValue placeholder="Выберите волюту" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                      <SelectGroup>
-                                        <SelectItem value="Авторский ремонт">Авторский ремонт</SelectItem>
-                                        <SelectItem value="Хайтек">Хайтек</SelectItem>
-                                        <SelectItem value="Новый">Новый</SelectItem>
-                                        <SelectItem value="Евро ремонт">Евро ремонт</SelectItem>
-                                      </SelectGroup>
+                                      <SelectItem value="usd">USD</SelectItem>
+                                      <SelectItem value="uzs">UZS</SelectItem>
                                     </SelectContent>
                                   </Select>
-                                </div>
-                                <div >
-                                  <label className="block text-sm font-medium ">Владелец</label>
-                                  <Select defaultValue={viewData?.userViaOwner} onValueChange={value => setUserViaOwner(value)}>
-                                    <SelectTrigger>
-                                      <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      <SelectGroup>
-                                        {users && users.map(item => (
-                                          <SelectItem key={item._id} value={item.fullName}>{item.fullName}</SelectItem>
-                                        ))}
-                                      </SelectGroup>
-                                    </SelectContent>
-                                  </Select>
-                                </div>
-                                <div >
-                                  <label className="block text-sm font-medium ">Район</label>
-                                  <Select defaultValue={viewData?.district} onValueChange={value => setDistrict(value)}>
-                                    <SelectTrigger>
-                                      <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      <SelectGroup>
-                                        {rayons.map(item => (
-                                          <SelectItem value={item} key={item}>{item}</SelectItem>
-                                        ))}
-                                      </SelectGroup>
-                                    </SelectContent>
-                                  </Select>
-                                </div>
-                                <div>
-                                  <label className="block text-sm font-medium mt-3">Адрес</label>
-                                  <Input type="text" placeholder="Введите адрес" value={address} onChange={e => setAddress(e.target.value)} />
-                                </div>
-                                <div>
-                                  <label className="block text-sm font-medium mt-3">Ориентир</label>
-                                  <Input type="text" placeholder="Введите ориентир" value={landmark} onChange={e => setLandmark(e.target.value)} />
-                                </div>
 
-                                <div>
-                                  <label className="block text-sm font-medium">Количество комнат</label>
-                                  <Input type="number" min="1" placeholder="Введите количество комнат" value={rooms} onChange={e => setRooms(Number(e.target.value))} />
+                                  <div>
+                                    <p>Дата доступности</p>
+                                    <Popover>
+                                      <PopoverTrigger asChild>
+                                        <Button
+                                          variant={"outline"}
+                                          className={cn(
+                                            "w-[200px] justify-start text-left font-normal"
+                                          )}
+                                        >
+                                          <CalendarIcon className="mr-2 h-4 w-4" />
+                                          {$date ? format($date, "PPP") : <span>Выберите дату</span>}
+                                        </Button>
+                                      </PopoverTrigger>
+                                      <PopoverContent className="w-auto p-0">
+                                        <Calendar
+                                          mode="single"
+                                          selected={$date}
+                                          onSelect={$setDate}
+                                          initialFocus
+                                        />
+                                      </PopoverContent>
+                                    </Popover>
+                                  </div>
                                 </div>
+                              )}
 
-                                <div>
-                                  <label className="block text-sm font-medium">Этаж</label>
-                                  <Input type="number" min="1" placeholder="Введите этаж" value={floors} onChange={(e) => setFloors(Number(e.target.value))} />
-                                </div>
-
-                                <div>
-                                  <label className="block text-sm font-medium">Этажность здания </label>
-                                  <Input type="number" min="1" placeholder="Введите этажность здания" value={numberOfFloorOfTheBuildind} onChange={e => setNumberOfFloorOfTheBuildind(Number(e.target.value))} />
-                                </div>
-
-                                <div>
-                                  <label className="block text-sm font-medium">Площадь m<sup>2</sup></label>
-                                  <Input type="number" min="1" placeholder="Введите площадь кв.м" value={square} onChange={e => setSquare(Number(e.target.value))} />
-                                </div>
-
-                                <div className="flex items-center space-x-2">
-                                  <Checkbox id="conditioner" checked={checkConditioner} onCheckedChange={() => setCheckConditioner(!checkConditioner)} />
-                                  <label
-                                    htmlFor="conditioner"
-                                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                                  >
-                                    Кондиционер
-                                  </label>
-                                </div>
-                                <div className="flex items-center space-x-2">
-                                  <Checkbox id="tv" checked={tv} onCheckedChange={() => setTv(!tv)} />
-                                  <label
-                                    htmlFor="tv"
-                                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                                  >
-                                    Телевизор
-                                  </label>
-                                </div>
-                                <div className="flex items-center space-x-2">
-                                  <Checkbox id="Washing-machine" checked={washingMaching} onCheckedChange={() => setWashingMachine(!washingMaching)} />
-                                  <label
-                                    htmlFor="Washing-machine"
-                                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                                  >
-                                    Стиральная машина
-                                  </label>
-                                </div>
-                                <div className="flex items-center space-x-2">
-                                  <Checkbox id="prepayment" checked={prepayment} onCheckedChange={() => setPrepayment(!prepayment)} />
-                                  <label
-                                    htmlFor="prepayment"
-                                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                                  >
-                                    Предоплата
-                                  </label>
-                                </div>
-                                <div className="flex items-center space-x-2">
-                                  <Checkbox id="deposit" checked={deposit} onCheckedChange={() => setDeposit(!deposit)} />
-                                  <label
-                                    htmlFor="deposit"
-                                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                                  >
-                                    Депозит
-                                  </label>
-                                </div>
-
-                                <div >
-                                  <label
-                                    htmlFor="deposit"
-                                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                                  >
-                                    Описание
-                                  </label>
-                                  <Textarea placeholder='Ведтье описание дома' value={description} onChange={(e) => setDescription(e.target.value)} />
-                                </div>
-                                <div>
-                                  <label className="block text-sm font-medium">Цена</label>
-                                  <Input type="number" placeholder="Введите цену" value={price} onChange={e => setPrice(Number(e.target.value))} />
-                                </div>
-
-                                <Select value={valute} onValueChange={value => setValute(value)}>
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Выберите волюту" />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="usd">USD</SelectItem>
-                                    <SelectItem value="uzs">UZS</SelectItem>
-                                  </SelectContent>
-                                </Select>
-
-                                <div>
-                                  <p>Дата доступности</p>
-                                  <Popover>
-                                    <PopoverTrigger asChild>
-                                      <Button
-                                        variant={"outline"}
-                                        className={cn(
-                                          "w-[200px] justify-start text-left font-normal"
-                                        )}
-                                      >
-                                        <CalendarIcon className="mr-2 h-4 w-4" />
-                                        {$date ? format($date, "PPP") : <span>Выберите дату</span>}
-                                      </Button>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-auto p-0">
-                                      <Calendar
-                                        mode="single"
-                                        selected={$date}
-                                        onSelect={$setDate}
-                                        initialFocus
-                                      />
-                                    </PopoverContent>
-                                  </Popover>
-                              </div>
-                              </div>
-                            )}
-
-                            <DialogFooter>
-                              <Button variant="destructive" type="button" disabled={loadingWhenDelete} onClick={() => onDeleteHouse(item._id)}>{loadingWhenDelete ? 'Изменение...' : 'Удолить'}</Button>
-                              <Button disabled={$loading} type="submit" >{$loading ? 'Изменение...' : 'Сохранить'}</Button>
-                            </DialogFooter>
-                              </form>
+                              <DialogFooter>
+                                <Button variant="destructive" type="button" disabled={loadingWhenDelete} onClick={() => onDeleteHouse(item._id)}>{loadingWhenDelete ? 'Изменение...' : 'Удолить'}</Button>
+                                <Button disabled={$loading} type="submit" >{$loading ? 'Изменение...' : 'Сохранить'}</Button>
+                              </DialogFooter>
+                            </form>
                           </DialogContent>
                         </Dialog>
                         <Button variant="outline">
