@@ -12,8 +12,8 @@ const HouseSchema = new Schema({
     required: true,
   },
   owner: {
-    type: String,
-    required: true
+    type: Schema.Types.ObjectId,
+    ref: "Owner"
   },
   landmark: {
     type: String,

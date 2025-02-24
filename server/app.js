@@ -261,6 +261,22 @@ app.post('/api/create-house', tokenValidation, async (req, res) => {
   }
 });
 
+app.get('/api/my-houses', tokenValidation, async (req, res) => {
+  try {
+    const { user } = req.user
+    const houses = await House.find({ employee: user.id }).populate('employee').populate('owner')
+    return res.status(200).json({
+      message: "My houses found successsfuly",
+      houses
+    })
+  } catch (error) {
+    console.log(error)
+    return res.status(500).json({
+      message: "Wrong server"
+    })
+  }
+})
+
 app.put('/api/edit-house/:id', tokenValidation, async (req, res) => {
   try {
     const { id } = req.params
@@ -354,17 +370,50 @@ app.get('/api/get-all-houses', async (req, res) => {
     return res.status(500).json({ message: "Something went wrong. Try again later." })
   }
 })
+app.put('/api/search/:value', tokenValidation, async (req, res) => {
+  try {
+    const { value } = req.params;
+
+    let filter = {};
+
+    if (mongoose.Types.ObjectId.isValid(value)) {
+      filter._id = value;
+    } else if (!isNaN(value)) {
+      filter.price = { $lte: Number(value) };
+    } else {
+      filter = {
+        $or: [
+          { repair: value },
+          { district: value },
+          { userViaOwner: value }
+        ]
+      };
+    }
+
+    const houses = await House.find(filter).populate('employee').populate('owner');
+
+    return res.status(200).json({
+      message: "Search results retrieved successfully",
+      houses,
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Ошибка сервера. Попробуйте позже." });
+  }
+});
+
 
 app.put('/api/filter-houses', async (req, res) => {
   try {
+    console.log(req.body)
     const { id, repair, price, date, district, rooms, floor, userViaOwner, owner } = req.body;
 
-    if (!id && !repair && !date && !price && !district && !rooms && !floor && !userViaOwner || !owner) {
+    if (!id && !repair && !date && !price && !district && !rooms && !floor && !userViaOwner && !owner) {
       return res.status(400).json({ message: "No filter parameters provided" });
     }
 
     let filter = {};
-    if (id && id !== '0') filter.id = id;
+    if (id && id !== '0') filter._id = id;
     if (repair) filter.repair = repair;
     if (price && price !== '0') filter.price = { $lte: Number(price) };
     if (date) filter.date = date;
@@ -373,7 +422,15 @@ app.put('/api/filter-houses', async (req, res) => {
     if (floor && floor !== '0') filter.floor = Number(floor);
     if (userViaOwner) filter.userViaOwner = userViaOwner;
 
-    const houses = await House.find(filter).populate('employee')
+    if (owner) {
+      if (mongoose.Types.ObjectId.isValid(owner)) {
+        filter.owner = owner;
+      } else {
+        return res.status(400).json({ message: "Invalid owner ID" });
+      }
+    }
+
+    const houses = await House.find(filter).populate('employee').populate('owner');
 
     return res.status(200).json({
       message: "Filter applied successfully",
@@ -386,6 +443,7 @@ app.put('/api/filter-houses', async (req, res) => {
     });
   }
 });
+
 
 app.post('/api/create-owner', tokenValidation, async (req, res) => {
   try {

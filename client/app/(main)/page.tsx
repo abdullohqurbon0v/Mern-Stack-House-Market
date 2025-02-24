@@ -69,6 +69,7 @@ const MainPage = () => {
   const [district, setDistrict] = useState<string>('')
   const [valute, setValute] = useState<string>('')
   const [selectOwners, setSelectOwners] = useState<string>('')
+  const [ownerFilterValue, setOwnerFilterValue] = useState('')
 
   // FILTER
   const [fId, setFId] = useState<number>(0)
@@ -104,6 +105,8 @@ const MainPage = () => {
 
   const [files, setFiles] = useState<File[]>([]);
   const [isModalAddOpen, setIsModalAddOpen] = useState<boolean>(false)
+
+  const [selectedFilter, setSelectedFilter] = useState('all')
 
 
 
@@ -168,6 +171,30 @@ const MainPage = () => {
       setAddloading(false);
     }
   };
+
+  const getMyHouses = async () => {
+    try {
+      const res = await fetchData.get('/my-houses')
+      setAllHouses(res.data.houses)
+
+    } catch (error) {
+      console.log(error)
+      toast({
+        title: "Ошибка",
+        variant: "destructive",
+        description: "Ошибка с сервером, пожалуйста, попытайтесь заново",
+        duration: 2000
+      });
+    }
+  }
+
+  useEffect(() => {
+    if (selectedFilter === 'my') {
+      getMyHouses()
+    } else {
+      return
+    }
+  }, [selectedFilter])
 
 
   useEffect(() => {
@@ -337,11 +364,14 @@ const MainPage = () => {
     formData.append('rooms', fRooms.toString());
     formData.append('floor', fFloors.toString());
     formData.append('userViaOwner', fUserViaOwner);
+    formData.append('owner', ownerFilterValue)
+
 
     try {
       const response = await fetchData.put('/filter-houses', formData);
       setAllHouses(response.data.houses)
     } catch (error: any) {
+      console.log(error)
       if (error.status === 400) {
         return
       }
@@ -355,17 +385,28 @@ const MainPage = () => {
 
   useEffect(() => {
     handleChangeData()
-  }, [fId, date, fRepair, fPrice, fDistrict, fRooms, fFloors, fUserViaOwner])
+  }, [fId, date, fRepair, fPrice, fDistrict, fRooms, fFloors, fUserViaOwner, ownerFilterValue])
 
   const onRemoveFieldData = () => {
-
+    setFId(0)
+    setDate(undefined)
+    setFRepair('')
+    setFPrice(0)
+    setFDistrict('')
+    setFRooms(0)
+    setFFloors(0)
+    setFUserViaOwner('')
+    setOwnerFilterValue('')
   }
-
-  const handleOpenModal = () => {
-
+  const onChangeFilter = async (status: string) => {
+    setSelectedFilter(status)
   }
   return (
     <div className='flex flex-col space-y-2'>
+      <div className='flex space-x-5 mb-5'>
+        <Button variant={selectedFilter === 'all' ? 'default' : 'ghost'} onClick={() => onChangeFilter('all')} >Все</Button>
+        <Button variant={selectedFilter === 'all' ? 'ghost' : 'default'} onClick={() => onChangeFilter('my')}>Вы владеете</Button>
+      </div>
       <div className='flex justify-between'>
         <div className='flex items-center space-x-5'>
           <Button onClick={onRemoveFieldData}>Очистить фильтр</Button>
@@ -374,7 +415,7 @@ const MainPage = () => {
         </div>
         <div>
           <Dialog open={isModalAddOpen} onOpenChange={setIsModalAddOpen}>
-            <DialogTrigger onClick={handleOpenModal} className="absolute left-[95%] top-[91%] border p-3 rounded-xl hover:bg-slate-900 transition-all z-50">
+            <DialogTrigger className="absolute left-[95%] top-[91%] border p-3 rounded-xl hover:bg-slate-900 transition-all z-50">
               <Plus />
             </DialogTrigger>
             <DialogContent>
@@ -778,10 +819,8 @@ const MainPage = () => {
               </TableHead>
               <TableHead>
                 <div>
-                  <p>Сотрудник</p>
-                  <Select onValueChange={value => {
-                    setFUserViaOwner(value)
-                  }}>
+                  <p>Владелец</p>
+                  <Select onValueChange={value => setOwnerFilterValue(value)}>
                     <SelectTrigger className='w-[180px]'>
                       <SelectValue placeholder='Выберите' />
                     </SelectTrigger>
@@ -789,7 +828,7 @@ const MainPage = () => {
                       <SelectGroup>
                         <SelectLabel>Владелец</SelectLabel>
                         {owners && owners.map(item => (
-                          <SelectItem key={item._id} value={item.phone}>{item.phone}</SelectItem>
+                          <SelectItem key={item._id} value={item._id}>{item.phone}</SelectItem>
                         ))}
                       </SelectGroup>
                     </SelectContent>
@@ -827,7 +866,7 @@ const MainPage = () => {
                   <TableCell onClick={() => onOpenViewModal(item._id, 'view')}>{item.rooms}</TableCell>
                   <TableCell onClick={() => onOpenViewModal(item._id, 'view')}>{item.floor}</TableCell>
                   <TableCell>{item.employee.fullName}</TableCell>
-                  <TableCell>{item.employee.fullName}</TableCell>
+                  <TableCell>{item.owner.phone}</TableCell>
                   <TableCell>
                     {user && item.employee._id == user._id ? (
                       <div className="flex space-x-3 items-center">

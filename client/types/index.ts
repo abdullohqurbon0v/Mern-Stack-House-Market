@@ -7,7 +7,11 @@ export interface IUser {
   email: string,
   password: string
 }
-
+export interface OwnersTypes {
+  name: string,
+  phone: string,
+  _id: string
+}
 
 export interface IHouse {
   _id: string,
@@ -25,6 +29,7 @@ export interface IHouse {
   rooms: number;
   numberOfFloorOfTheBuilding: number;
   price: number;
+  owner: OwnersTypes;
   employee: IUser;
   checkConditioner: boolean;
   tv: boolean;
@@ -37,8 +42,3 @@ export interface IHouse {
 }
 
 
-export interface OwnersTypes {
-  name: string,
-  phone: string,
-  _id: string
-}
