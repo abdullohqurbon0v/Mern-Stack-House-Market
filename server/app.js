@@ -183,13 +183,14 @@ app.post('/api/create-house', tokenValidation, async (req, res) => {
       uploadedFiles = await Promise.all(files.map(file => FileService.save(file)));
     }
 
+    const foundedOwner = await Owners.findOne({ name: owner })
+
     const selectedDate = new Date(date);
     const parsetDate = selectedDate.toLocaleString('uz-UZ', {
       year: 'numeric',
       month: 'numeric',
       day: 'numeric',
     });
-    console.log(parsetDate)
 
     const allHouses = await House.find();
     const newId = allHouses.length + 1;
@@ -223,7 +224,7 @@ app.post('/api/create-house', tokenValidation, async (req, res) => {
 💳 Депозит: ${deposit == 'true' ? 'Да' : 'Нет'}
 💰 Цена: ${price}${valute}
 
-📅 Дата: ${date}
+📅 Дата: ${parsetDate}
 `;
 
     const messageId = await sendMessage(message, uploadedFiles);
@@ -240,7 +241,7 @@ app.post('/api/create-house', tokenValidation, async (req, res) => {
       numberOfFloorOfTheBuildind: Number(numberOfFloorOfTheBuildind),
       price: Number(price),
       repair,
-      owner,
+      owner: foundedOwner._id,
       userViaOwner,
       valute,
       checkConditioner,
@@ -343,7 +344,7 @@ app.delete('/api/remove-house/:id', tokenValidation, async (req, res) => {
 
 app.get('/api/get-all-houses', async (req, res) => {
   try {
-    const houses = await House.find().populate('employee')
+    const houses = await House.find().populate('employee').populate('owner')
     return res.status(200).json({
       message: "Houses found successfuly",
       data: houses
@@ -356,9 +357,9 @@ app.get('/api/get-all-houses', async (req, res) => {
 
 app.put('/api/filter-houses', async (req, res) => {
   try {
-    const { id, repair, price, date, district, rooms, floor, userViaOwner } = req.body;
+    const { id, repair, price, date, district, rooms, floor, userViaOwner, owner } = req.body;
 
-    if (!id && !repair && !date && !price && !district && !rooms && !floor && !userViaOwner) {
+    if (!id && !repair && !date && !price && !district && !rooms && !floor && !userViaOwner || !owner) {
       return res.status(400).json({ message: "No filter parameters provided" });
     }
 

@@ -5,12 +5,12 @@ const chatId = process.env.CHANNEL_ID;
 
 async function sendMessage(message, images) {
   try {
-    console.log(message)
+    console.log(images)
     const sendMediaGroupUrl = `https://api.telegram.org/bot${botToken}/sendMediaGroup`;
 
     const media = images.map((image, index) => ({
       type: "photo",
-      media: `https://4b41-84-54-84-110.ngrok-free.app/${image}`,
+      media: `https://7be4-84-54-84-110.ngrok-free.app/${image}`,
       caption: index === 0 ? message : undefined,
       parse_mode: "Markdown"
     }));
