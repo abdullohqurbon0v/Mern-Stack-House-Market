@@ -18,12 +18,12 @@ import { useHouseStore } from '@/store/houses';
 import { useUser } from '@/store/user';
 import { IHouse, IUser, OwnersTypes } from '@/types';
 import { format } from 'date-fns';
+import { motion } from 'framer-motion';
 import { Calendar as CalendarIcon, Edit, Loader2, Plus, Send } from 'lucide-react';
 import moment from 'moment';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { ChangeEvent, FormEvent, useEffect, useState } from 'react';
-import { motion } from 'framer-motion'
 
 const MainPage = () => {
   const { toast } = useToast()
@@ -102,6 +102,8 @@ const MainPage = () => {
   const [Adate, setADate] = useState<Date>()
 
   const [addLoading, setAddloading] = useState(false)
+
+  const  [search, setSearch] = useState('')
 
   const [files, setFiles] = useState<File[]>([]);
   const [isModalAddOpen, setIsModalAddOpen] = useState<boolean>(false)
@@ -370,11 +372,8 @@ const MainPage = () => {
     try {
       const response = await fetchData.put('/filter-houses', formData);
       setAllHouses(response.data.houses)
-    } catch (error: any) {
+    } catch (error) {
       console.log(error)
-      if (error.status === 400) {
-        return
-      }
       toast({
         title: "Ошибка",
         description: "Ошибка с сервером, пожалуйста, попытайтесь заново",
@@ -401,11 +400,33 @@ const MainPage = () => {
   const onChangeFilter = async (status: string) => {
     setSelectedFilter(status)
   }
+
+  const changeSearch =  async(e:ChangeEvent<HTMLInputElement>) => {
+    setSearch(e.target.value)
+    try {
+      if(e.target.value.trim()) {
+        const response = await fetchData.put(`/search/${e.target.value}`)
+        setAllHouses(response.data.houses)
+      }
+    } catch (error) {
+      console.log(error)
+      toast({
+        title: "Ошибка",
+        description: "Ошибка с сервером, пожалуйста, попытайтесь заново",
+        duration: 3000
+      });
+    }
+  }
   return (
     <div className='flex flex-col space-y-2'>
+      <div className='flex justify-between items-center'>
       <div className='flex space-x-5 mb-5'>
         <Button variant={selectedFilter === 'all' ? 'default' : 'ghost'} onClick={() => onChangeFilter('all')} >Все</Button>
         <Button variant={selectedFilter === 'all' ? 'ghost' : 'default'} onClick={() => onChangeFilter('my')}>Вы владеете</Button>
+      </div>
+      <form>
+        <Input type={"text"} placeholder='Искать...' value={search} onChange={e => changeSearch(e)}/>
+      </form>
       </div>
       <div className='flex justify-between'>
         <div className='flex items-center space-x-5'>

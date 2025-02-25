@@ -373,7 +373,6 @@ app.get('/api/get-all-houses', async (req, res) => {
 app.put('/api/search/:value', tokenValidation, async (req, res) => {
   try {
     const { value } = req.params;
-
     let filter = {};
 
     if (mongoose.Types.ObjectId.isValid(value)) {
@@ -383,12 +382,14 @@ app.put('/api/search/:value', tokenValidation, async (req, res) => {
     } else {
       filter = {
         $or: [
-          { repair: value },
-          { district: value },
-          { userViaOwner: value }
+          { repair: { $regex: new RegExp(value, 'i') } },
+          { district: { $regex: new RegExp(value, 'i') } },
+          { userViaOwner: { $regex: new RegExp(value, 'i') } }
         ]
       };
     }
+
+    console.log(filter);
 
     const houses = await House.find(filter).populate('employee').populate('owner');
 

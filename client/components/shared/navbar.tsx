@@ -1,4 +1,4 @@
-import { Calendar, Home, Inbox, } from "lucide-react"
+import { Calendar, Home, } from "lucide-react"
 import {
   Sidebar,
   SidebarContent,
