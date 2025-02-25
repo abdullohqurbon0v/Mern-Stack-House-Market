@@ -10,7 +10,7 @@ async function sendMessage(message, images) {
 
     const media = images.map((image, index) => ({
       type: "photo",
-      media: `https://0e55-90-156-197-221.ngrok-free.app/${image}`,
+      media: `https://apimyhomegroup.onrender.com/${image}`,
       caption: index === 0 ? message : undefined,
       parse_mode: "Markdown"
     }));
