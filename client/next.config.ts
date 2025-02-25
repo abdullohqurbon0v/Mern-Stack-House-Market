@@ -10,6 +10,10 @@ const nextConfig: NextConfig = {
       {
         protocol: "https",
         hostname: 'apimyhomegroup.onrender.com'
+      },
+        {
+        protocol: "https",
+        hostname: 'mern-stack-house-market.onrender.com'
       }
     ],
   },
