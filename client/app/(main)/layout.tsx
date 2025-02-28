@@ -57,7 +57,7 @@ const MainLayout = ({ children }: ChildProps) => {
       <SidebarProvider>
         <AppSidebar />
         <div className="flex-1 flex flex-col">
-          <header className="w-full flex justify-between items-center p-4 pr-10 shadow-md">
+          <header className="max-w-full flex justify-between items-center p-4 pr-10 shadow-md">
             <div className='flex items-center space-x-2'>
               <SidebarTrigger />
               <h1 className="text-lg font-bold">MyHomeGroup</h1>

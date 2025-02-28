@@ -103,7 +103,7 @@ const MainPage = () => {
 
   const [addLoading, setAddloading] = useState(false)
 
-  const  [search, setSearch] = useState('')
+  const [search, setSearch] = useState('')
 
   const [files, setFiles] = useState<File[]>([]);
   const [isModalAddOpen, setIsModalAddOpen] = useState<boolean>(false)
@@ -159,7 +159,8 @@ const MainPage = () => {
 
       const res = await fetchData.post('/create-house', formData);
       console.log(res)
-      addHouse(res.data.house)
+      const get = await fetchData.get('/get-all-houses')
+      setAllHouses(get.data.data)
       setAddloading(false);
       setIsModalAddOpen(false)
     } catch (error) {
@@ -401,10 +402,10 @@ const MainPage = () => {
     setSelectedFilter(status)
   }
 
-  const changeSearch =  async(e:ChangeEvent<HTMLInputElement>) => {
+  const changeSearch = async (e: ChangeEvent<HTMLInputElement>) => {
     setSearch(e.target.value)
     try {
-      if(e.target.value.trim()) {
+      if (e.target.value.trim()) {
         const response = await fetchData.put(`/search/${e.target.value}`)
         setAllHouses(response.data.houses)
       }
@@ -420,13 +421,13 @@ const MainPage = () => {
   return (
     <div className='flex flex-col space-y-2'>
       <div className='flex justify-between items-center'>
-      <div className='flex space-x-5 mb-5'>
-        <Button variant={selectedFilter === 'all' ? 'default' : 'ghost'} onClick={() => onChangeFilter('all')} >Все</Button>
-        <Button variant={selectedFilter === 'all' ? 'ghost' : 'default'} onClick={() => onChangeFilter('my')}>Вы владеете</Button>
-      </div>
-      <form>
-        <Input type={"text"} placeholder='Искать...' value={search} onChange={e => changeSearch(e)}/>
-      </form>
+        <div className='flex space-x-5 mb-5'>
+          <Button variant={selectedFilter === 'all' ? 'default' : 'ghost'} onClick={() => onChangeFilter('all')} >Все</Button>
+          <Button variant={selectedFilter === 'all' ? 'ghost' : 'default'} onClick={() => onChangeFilter('my')}>Вы владеете</Button>
+        </div>
+        <form>
+          <Input type={"text"} placeholder='Искать...' value={search} onChange={e => changeSearch(e)} />
+        </form>
       </div>
       <div className='flex justify-between'>
         <div className='flex items-center space-x-5'>
