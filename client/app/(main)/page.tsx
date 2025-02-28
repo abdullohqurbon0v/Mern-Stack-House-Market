@@ -28,7 +28,7 @@ import { ChangeEvent, FormEvent, useEffect, useState } from 'react';
 const MainPage = () => {
   const { toast } = useToast()
   const { user } = useUser()
-  const { houses, setAllHouses, addHouse } = useHouseStore()
+  const { houses, setAllHouses } = useHouseStore()
   const router = useRouter();
   const [owners, setOwners] = useState<OwnersTypes[]>([])
   const [currentPage, setCurrentPage] = useState(1);
