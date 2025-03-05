@@ -887,7 +887,7 @@ const MainPage = () => {
                   <TableCell onClick={() => onOpenViewModal(item._id, 'view')}>{item.district}</TableCell>
                   <TableCell onClick={() => onOpenViewModal(item._id, 'view')}>{item.rooms}</TableCell>
                   <TableCell onClick={() => onOpenViewModal(item._id, 'view')}>{item.floor}</TableCell>
-                  <TableCell>{item.employee.fullName}</TableCell>
+                  <TableCell>{item.userViaOwner}</TableCell>
                   <TableCell>{item.owner.phone}</TableCell>
                   <TableCell>
                     {user && item.employee._id == user._id ? (
