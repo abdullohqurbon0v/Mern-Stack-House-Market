@@ -222,6 +222,24 @@ const MainPage = () => {
       setAllHouses(get.data.data);
       setAddloading(false);
       setIsModalAddOpen(false);
+      setARepair("");
+      setAaddress("");
+      setAUserViaOwner("");
+      setADistrict("");
+      setALandmark("");
+      setARooms(0);
+      setAFloor(9);
+      setANumberOfFloorOfTheBuildind(0);
+      setAsquare("");
+      setAcheckconditioner(false);
+      setAWashingMachine(false);
+      setATV(false);
+      setAPrepayment(false);
+      setADeposit(false);
+      setADescription("");
+      setAPrice("");
+      setAValute("");
+      setFiles([]);
     } catch (error) {
       console.log(error);
       toast({
