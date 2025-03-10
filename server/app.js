@@ -1,58 +1,69 @@
-require('dotenv').config();
-const express = require('express');
-const mongoose = require('mongoose');
-const jwt = require('jsonwebtoken');
-const bcrypt = require('bcrypt');
-const { sendMessage, editMessage, removeMessage } = require('./bot');
-const House = require('./models/House');
-const userModel = require('./models/User');
-const UserDto = require('./dtos/user.dto');
-const cors = require('cors')
-const tokenValidation = require('./middlewares/auth');
-const FileService = require('./file')
-const cookieParser = require('cookie-parser')
-const fileUpload = require('express-fileupload')
-const bodyParser = require('body-parser');
-const Owners = require('./models/Owners')
-
+require("dotenv").config();
+const express = require("express");
+const mongoose = require("mongoose");
+const jwt = require("jsonwebtoken");
+const bcrypt = require("bcrypt");
+const { sendMessage, editMessage, removeMessage } = require("./bot");
+const House = require("./models/House");
+const userModel = require("./models/User");
+const UserDto = require("./dtos/user.dto");
+const cors = require("cors");
+const tokenValidation = require("./middlewares/auth");
+const FileService = require("./file");
+const cookieParser = require("cookie-parser");
+const fileUpload = require("express-fileupload");
+const bodyParser = require("body-parser");
+const Owners = require("./models/Owners");
 
 const app = express();
 const port = process.env.PORT || 4000;
 
-app.use(express.json())
-app.use(fileUpload({}))
-app.use(cors({
-  origin: "*",
-  methods: ['GET', 'POST', 'PUT', 'DELETE']
-}))
 app.use(express.json());
-app.use(cookieParser({}))
-app.use(express.static('static'))
-app.use(bodyParser.json())
+app.use(fileUpload({}));
+app.use(
+  cors({
+    origin: "*",
+    methods: ["GET", "POST", "PUT", "DELETE"],
+  })
+);
+app.use(express.json());
+app.use(cookieParser({}));
+app.use(express.static("static"));
+app.use(bodyParser.json());
 
-app.post('/api/create-user', async (req, res) => {
+app.post("/api/create-user", async (req, res) => {
   try {
-    const { fullName, email, phone, password } = req.body;
+    const { fullName, email, password } = req.body;
     if (!fullName || !email || !password) {
       return res.status(400).json({ message: "Все поля нужно заполнить" });
     }
 
     const existingUser = await userModel.findOne({ email });
     if (existingUser) {
-      return res.status(400).json({ message: "Manager with this email already exists. Try another email" });
+      return res.status(400).json({
+        message: "Manager with this email already exists. Try another email",
+      });
     }
 
     const hash = await bcrypt.hash(password, 10);
-    const createdUser = await userModel.create({ fullName, email, password: hash, phone });
+    const createdUser = await userModel.create({
+      fullName,
+      email,
+      password: hash,
+    });
 
-    return res.status(200).json({ user: createdUser, message: "Manager created successfully" });
+    return res
+      .status(200)
+      .json({ user: createdUser, message: "Manager created successfully" });
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ message: "Error creating user. Please try again later" });
+    return res
+      .status(500)
+      .json({ message: "Error creating user. Please try again later" });
   }
 });
 
-app.post('/api/login', async (req, res) => {
+app.post("/api/login", async (req, res) => {
   try {
     const { email, password } = req.body;
 
@@ -71,82 +82,113 @@ app.post('/api/login', async (req, res) => {
     }
 
     const userDTO = new UserDto(user);
-    const accessToken = jwt.sign({ user: userDTO }, process.env.JWT_SECRET, { expiresIn: '1d' });
+    const accessToken = jwt.sign({ user: userDTO }, process.env.JWT_SECRET, {
+      expiresIn: "1d",
+    });
 
-    return res.status(200).json({ message: "Вошли в систему", access_token: accessToken });
+    return res
+      .status(200)
+      .json({ message: "Вошли в систему", access_token: accessToken });
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ message: "Error logging in. Please try again later" });
+    return res
+      .status(500)
+      .json({ message: "Error logging in. Please try again later" });
   }
 });
 
-app.get('/api/get-all-users', tokenValidation, async (req, res) => {
+app.get("/api/get-all-users", tokenValidation, async (req, res) => {
   try {
-    const users = await userModel.find()
+    const users = await userModel.find();
     return res.status(200).json({
       message: "Все пользователи найдены",
       users,
-    })
+    });
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ message: "Error logging in. Please try again later" });
+    return res
+      .status(500)
+      .json({ message: "Error logging in. Please try again later" });
   }
-})
+});
 
-app.get('/api/get-user-info', tokenValidation, async (req, res) => {
+app.put("/api/filter-users", async (req, res) => {
   try {
-    const { user } = req.user
-    const foundedUser = await userModel.findById(user.id)
+    const { fullName, email } = req.body;
+
+    const filter = {};
+
+    if (fullName) filter.fullName = { $regex: fullName.trim(), $options: "i" };
+    if (email) filter.email = { $regex: email.trim(), $options: "i" };
+
+    const foundedUsers = await userModel.find(filter);
+
+    return res.status(200).json({
+      message: "Пользователи найдены",
+      users: foundedUsers,
+    });
+  } catch (error) {
+    console.error(error);
+    return res
+      .status(500)
+      .json({ message: "Error logging in. Please try again later" });
+  }
+});
+
+app.get("/api/get-user-info", tokenValidation, async (req, res) => {
+  try {
+    const { user } = req.user;
+    const foundedUser = await userModel.findById(user.id);
     return res.status(200).json({
       messaeg: "User information found successfuly",
-      user: foundedUser
-    })
+      user: foundedUser,
+    });
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ message: "Error logging in. Please try again later" });
+    return res
+      .status(500)
+      .json({ message: "Error logging in. Please try again later" });
   }
-})
+});
 
-app.get('/api/get-user/:id', tokenValidation, async (req, res) => {
+app.get("/api/get-user/:id", tokenValidation, async (req, res) => {
   try {
-    const id = req.params.id
-    const foundedUser = await userModel.findById(id)
+    const id = req.params.id;
+    const foundedUser = await userModel.findById(id);
     if (!foundedUser) {
       return res.status(400).json({
         message: "Manager not found",
-      })
+      });
     }
 
     return res.status(200).json({
       message: "User found usccessfult",
-      user: foundedUser
-    })
+      user: foundedUser,
+    });
   } catch (error) {
-    console.log(error)
+    console.log(error);
     return res.status(500).json({
-      message: "Something went wrong. Pleace try again latter"
-    })
+      message: "Something went wrong. Pleace try again latter",
+    });
   }
-})
+});
 
-
-app.get('/api/get-house/:id', tokenValidation, async (req, res) => {
+app.get("/api/get-house/:id", tokenValidation, async (req, res) => {
   try {
-    const id = req.params.id
-    const foundedHouse = await House.findById(id)
+    const id = req.params.id;
+    const foundedHouse = await House.findById(id);
     return res.status(200).json({
       message: "Found successfuly",
-      house: foundedHouse
-    })
-
+      house: foundedHouse,
+    });
   } catch (error) {
     return res.status(500).json({
-      message: "Something went wrong. Pleace try again latter"
-    })
+      message: "Something went wrong. Pleace try again latter",
+    });
   }
-})
+});
 
-app.post('/api/create-house', tokenValidation, async (req, res) => {
+app.post("/api/create-house", tokenValidation, async (req, res) => {
   try {
     const { user } = req.user;
     const {
@@ -178,23 +220,26 @@ app.post('/api/create-house', tokenValidation, async (req, res) => {
     console.log(Boolean(checkConditioner));
 
     let uploadedFiles = [];
-    if (req.files && req.files['files[]']) {
-      const files = Array.isArray(req.files['files[]']) ? req.files['files[]'] : [req.files['files[]']];
-      uploadedFiles = await Promise.all(files.map(file => FileService.save(file)));
+    if (req.files && req.files["files[]"]) {
+      const files = Array.isArray(req.files["files[]"])
+        ? req.files["files[]"]
+        : [req.files["files[]"]];
+      uploadedFiles = await Promise.all(
+        files.map((file) => FileService.save(file))
+      );
     }
 
-    const foundedOwner = await Owners.findOne({ name: owner })
+    const foundedOwner = await Owners.findOne({ name: owner });
 
     const selectedDate = new Date(date);
-    const parsetDate = selectedDate.toLocaleString('uz-UZ', {
-      year: 'numeric',
-      month: 'numeric',
-      day: 'numeric',
+    const parsetDate = selectedDate.toLocaleString("uz-UZ", {
+      year: "numeric",
+      month: "numeric",
+      day: "numeric",
     });
 
     const allHouses = await House.find();
     const newId = allHouses.length + 1;
-
 
     const message = `
 ✨✨✨ СДАЁТСЯ ✨✨✨
@@ -215,13 +260,13 @@ app.post('/api/create-house', tokenValidation, async (req, res) => {
 • Описание: ${description}
 
 Удобства:
-• Кондиционер: ${checkConditioner == 'true' ? 'Да' : 'Нет'}
-• Телевизор: ${tv == 'true' ? 'Да' : 'Нет'}
-• Стиральная машина: ${washingMaching == 'true' ? 'Да' : 'Нет'}
+• Кондиционер: ${checkConditioner == "true" ? "Да" : "Нет"}
+• Телевизор: ${tv == "true" ? "Да" : "Нет"}
+• Стиральная машина: ${washingMaching == "true" ? "Да" : "Нет"}
 
 Способы оплаты:
-💸 Предоплата: ${prepayment == 'true' ? 'Да' : 'Нет'}
-💳 Депозит: ${deposit == 'true' ? 'Да' : 'Нет'}
+💸 Предоплата: ${prepayment == "true" ? "Да" : "Нет"}
+💳 Депозит: ${deposit == "true" ? "Да" : "Нет"}
 💰 Цена: ${price}${valute}
 
 📅 Дата: ${parsetDate}
@@ -254,55 +299,117 @@ app.post('/api/create-house', tokenValidation, async (req, res) => {
       id: newId,
     });
 
-    return res.status(200).json({ message: 'House created successfully', house: newHouse });
+    return res
+      .status(200)
+      .json({ message: "House created successfully", house: newHouse });
   } catch (error) {
-    console.error('Error:', error);
-    return res.status(500).json({ message: 'Something went wrong. Try again later.' });
+    console.error("Error:", error);
+    return res
+      .status(500)
+      .json({ message: "Something went wrong. Try again later." });
   }
 });
 
-app.get('/api/my-houses', tokenValidation, async (req, res) => {
+app.get("/api/my-houses", tokenValidation, async (req, res) => {
   try {
-    const { user } = req.user
-    const houses = await House.find({ employee: user.id }).populate('employee').populate('owner')
+    const { user } = req.user;
+    const houses = await House.find({ employee: user.id })
+      .populate("employee")
+      .populate("owner");
     return res.status(200).json({
       message: "My houses found successsfuly",
-      houses
-    })
+      houses,
+    });
   } catch (error) {
-    console.log(error)
+    console.log(error);
     return res.status(500).json({
-      message: "Wrong server"
-    })
+      message: "Wrong server",
+    });
   }
-})
+});
 
-app.put('/api/edit-house/:id', tokenValidation, async (req, res) => {
+app.put("/api/edit-house/:id", tokenValidation, async (req, res) => {
   try {
-    const { id } = req.params
-    const { repair, address, userViaOwner, valute, landmark, district, description, square, date, floor, rooms, numberOfFloorOfTheBuildind, price, checkConditioner, tv, washingMaching, prepayment, deposit } = req.body
-    const { user } = req.user;
-    const house = await House.findById(id)
-    if (!repair || !address || !userViaOwner || !landmark || !valute || !district || !description || !square || !date || !floor || !rooms || !numberOfFloorOfTheBuildind || !price || !checkConditioner || !tv || !washingMaching || !prepayment || !deposit) {
-      return res.status(400).json({
-        message: "Все поля нужно ввести"
-      })
-    }
-
-    const $date = new Date(date)
-    const readableData = $date.toLocaleString('uz-UZ', {
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-    })
-    const edited = await House.findByIdAndUpdate(id, {
+    const { id } = req.params;
+    const {
       repair,
       address,
       userViaOwner,
-      landmark, valute, district, description, square, date, floor, rooms, numberOfFloorOfTheBuildind, price, checkConditioner, tv, washingMaching, prepayment, deposit
-    }, {
-      new: true
-    })
+      valute,
+      landmark,
+      district,
+      description,
+      square,
+      date,
+      floor,
+      rooms,
+      numberOfFloorOfTheBuildind,
+      price,
+      checkConditioner,
+      tv,
+      washingMaching,
+      prepayment,
+      deposit,
+    } = req.body;
+    const { user } = req.user;
+    const house = await House.findById(id);
+    if (
+      !repair ||
+      !address ||
+      !userViaOwner ||
+      !landmark ||
+      !valute ||
+      !district ||
+      !description ||
+      !square ||
+      !date ||
+      !floor ||
+      !rooms ||
+      !numberOfFloorOfTheBuildind ||
+      !price ||
+      !checkConditioner ||
+      !tv ||
+      !washingMaching ||
+      !prepayment ||
+      !deposit
+    ) {
+      return res.status(400).json({
+        message: "Все поля нужно ввести",
+      });
+    }
+
+    const $date = new Date(date);
+    const readableData = $date.toLocaleString("uz-UZ", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
+    const edited = await House.findByIdAndUpdate(
+      id,
+      {
+        repair,
+        address,
+        userViaOwner,
+        landmark,
+        valute,
+        district,
+        description,
+        square,
+        date,
+        floor,
+        rooms,
+        numberOfFloorOfTheBuildind,
+        price,
+        checkConditioner,
+        tv,
+        washingMaching,
+        prepayment,
+        deposit,
+      },
+      {
+        new: true,
+      }
+    );
     const message = `
 ✨✨✨ СДАЁТСЯ ✨✨✨
 
@@ -322,55 +429,67 @@ app.put('/api/edit-house/:id', tokenValidation, async (req, res) => {
 • Описание: ${description}
 
 Удобства:
-• Кондиционер: ${checkConditioner == 'true' ? 'Да' : 'Нет'}
-• Телевизор: ${tv == 'true' ? 'Да' : 'Нет'}
-• Стиральная машина: ${washingMaching == 'true' ? 'Да' : 'Нет'}
+• Кондиционер: ${checkConditioner == "true" ? "Да" : "Нет"}
+• Телевизор: ${tv == "true" ? "Да" : "Нет"}
+• Стиральная машина: ${washingMaching == "true" ? "Да" : "Нет"}
 
 Способы оплаты:
-💸 Предоплата: ${prepayment == 'true' ? 'Да' : 'Нет'}
-💳 Депозит: ${deposit == 'true' ? 'Да' : 'Нет'}
+💸 Предоплата: ${prepayment == "true" ? "Да" : "Нет"}
+💳 Депозит: ${deposit == "true" ? "Да" : "Нет"}
 💰 Цена: ${price}${valute}
 
 📅 Дата: ${readableData}
 `;
     const response = await editMessage(message, house.messageId);
-    return res.status(200).json({ message: "Вашы данные изменены.", house: edited, status: response });
+    return res.status(200).json({
+      message: "Вашы данные изменены.",
+      house: edited,
+      status: response,
+    });
   } catch (error) {
-    console.error('Error:', error);
-    return res.status(500).json({ message: "Something went wrong. Try again later." });
+    console.error("Error:", error);
+    return res
+      .status(500)
+      .json({ message: "Something went wrong. Try again later." });
   }
 });
 
-app.delete('/api/remove-house/:id', tokenValidation, async (req, res) => {
+app.delete("/api/remove-house/:id", tokenValidation, async (req, res) => {
   try {
     const { id } = req.params;
     const deletedHouse = await House.findByIdAndDelete(id);
 
-    await removeMessage(deletedHouse.messageId)
+    await removeMessage(deletedHouse.messageId);
     if (!deletedHouse) {
       return res.status(404).json({ message: "House not found" });
     }
 
-    return res.status(200).json({ message: "House removed successfully", post: deletedHouse });
+    return res
+      .status(200)
+      .json({ message: "House removed successfully", post: deletedHouse });
   } catch (error) {
-    console.error('Error:', error);
-    return res.status(500).json({ message: "Something went wrong. Try again later." });
+    console.error("Error:", error);
+    return res
+      .status(500)
+      .json({ message: "Something went wrong. Try again later." });
   }
 });
 
-app.get('/api/get-all-houses', async (req, res) => {
+app.get("/api/get-all-houses", async (req, res) => {
   try {
-    const houses = await House.find().populate('employee').populate('owner')
+    const houses = await House.find().populate("employee").populate("owner");
     return res.status(200).json({
       message: "Houses found successfuly",
-      data: houses
-    })
+      data: houses,
+    });
   } catch (error) {
-    console.log("Error", error)
-    return res.status(500).json({ message: "Something went wrong. Try again later." })
+    console.log("Error", error);
+    return res
+      .status(500)
+      .json({ message: "Something went wrong. Try again later." });
   }
-})
-app.put('/api/search/:value', tokenValidation, async (req, res) => {
+});
+app.put("/api/search/:value", tokenValidation, async (req, res) => {
   try {
     const { value } = req.params;
     let filter = {};
@@ -382,16 +501,18 @@ app.put('/api/search/:value', tokenValidation, async (req, res) => {
     } else {
       filter = {
         $or: [
-          { repair: { $regex: new RegExp(value, 'i') } },
-          { district: { $regex: new RegExp(value, 'i') } },
-          { userViaOwner: { $regex: new RegExp(value, 'i') } }
-        ]
+          { repair: { $regex: new RegExp(value, "i") } },
+          { district: { $regex: new RegExp(value, "i") } },
+          { userViaOwner: { $regex: new RegExp(value, "i") } },
+        ],
       };
     }
 
     console.log(filter);
 
-    const houses = await House.find(filter).populate('employee').populate('owner');
+    const houses = await House.find(filter)
+      .populate("employee")
+      .populate("owner");
 
     return res.status(200).json({
       message: "Search results retrieved successfully",
@@ -399,28 +520,49 @@ app.put('/api/search/:value', tokenValidation, async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ message: "Ошибка сервера. Попробуйте позже." });
+    return res
+      .status(500)
+      .json({ message: "Ошибка сервера. Попробуйте позже." });
   }
 });
 
-
-app.put('/api/filter-houses', async (req, res) => {
+app.put("/api/filter-houses", async (req, res) => {
   try {
-    console.log(req.body)
-    const { id, repair, price, date, district, rooms, floor, userViaOwner, owner } = req.body;
+    console.log(req.body);
+    const {
+      id,
+      repair,
+      price,
+      date,
+      district,
+      rooms,
+      floor,
+      userViaOwner,
+      owner,
+    } = req.body;
 
-    if (!id && !repair && !date && !price && !district && !rooms && !floor && !userViaOwner && !owner) {
+    if (
+      !id &&
+      !repair &&
+      !date &&
+      !price &&
+      !district &&
+      !rooms &&
+      !floor &&
+      !userViaOwner &&
+      !owner
+    ) {
       return res.status(400).json({ message: "No filter parameters provided" });
     }
 
     let filter = {};
-    if (id && id !== '0') filter._id = id;
+    if (id && id !== "0") filter._id = id;
     if (repair) filter.repair = repair;
-    if (price && price !== '0') filter.price = { $lte: Number(price) };
+    if (price && price !== "0") filter.price = { $lte: Number(price) };
     if (date) filter.date = date;
     if (district) filter.district = district;
-    if (rooms && rooms !== '0') filter.rooms = Number(rooms);
-    if (floor && floor !== '0') filter.floor = Number(floor);
+    if (rooms && rooms !== "0") filter.rooms = Number(rooms);
+    if (floor && floor !== "0") filter.floor = Number(floor);
     if (userViaOwner) filter.userViaOwner = userViaOwner;
 
     if (owner) {
@@ -431,7 +573,9 @@ app.put('/api/filter-houses', async (req, res) => {
       }
     }
 
-    const houses = await House.find(filter).populate('employee').populate('owner');
+    const houses = await House.find(filter)
+      .populate("employee")
+      .populate("owner");
 
     return res.status(200).json({
       message: "Filter applied successfully",
@@ -445,14 +589,13 @@ app.put('/api/filter-houses', async (req, res) => {
   }
 });
 
-
-app.post('/api/create-owner', tokenValidation, async (req, res) => {
+app.post("/api/create-owner", tokenValidation, async (req, res) => {
   try {
-    const { name, phone } = req.body
+    const { name, phone } = req.body;
     if (!name || !phone) {
       return res.status(400).json({
-        message: "Все поля нужно ввести"
-      })
+        message: "Все поля нужно ввести",
+      });
     }
 
     // const isExistuser = await Owners.findOne({ phone })
@@ -461,63 +604,69 @@ app.post('/api/create-owner', tokenValidation, async (req, res) => {
     //     message: "пользователь с этим именем "
     //   })
     // }
-    const users = await Owners.find()
-    const createduser = await Owners.create({ id: users.length + 1, name, phone: `+998 ${phone}` })
+    const users = await Owners.find();
+    const createduser = await Owners.create({
+      id: users.length + 1,
+      name,
+      phone: `+998 ${phone}`,
+    });
 
     return res.status(200).json({
       message: "Пользователь создан",
-      owner: createduser
-    })
+      owner: createduser,
+    });
   } catch (error) {
     console.log(error);
     return res.status(500).json({
-      message: "Something went wrong"
-    })
+      message: "Something went wrong",
+    });
   }
-})
+});
 
-app.get('/api/get-owners', tokenValidation, async (req, res) => {
+app.get("/api/get-owners", tokenValidation, async (req, res) => {
   try {
-    const users = await Owners.find()
+    const users = await Owners.find();
     return res.status(200).json({
       message: "пользователи найдены",
-      owners: users
-    })
+      owners: users,
+    });
   } catch (error) {
-    console.log(error)
+    console.log(error);
     return res.status(500).json({
-      message: "Ошибка с серверос. Попытайтесь заново"
-    })
+      message: "Ошибка с серверос. Попытайтесь заново",
+    });
   }
-})
-app.put('/api/filter-owners', tokenValidation, async (req, res) => {
+});
+app.put("/api/filter-owners", tokenValidation, async (req, res) => {
   try {
     const { name, phone } = req.body;
 
     const filter = {};
 
-    if (name) filter.name = { $regex: name.trim(), $options: 'i' };
-    if (phone) filter.phone = { $regex: phone.trim(), $options: 'i' };
+    if (name) filter.name = { $regex: name.trim(), $options: "i" };
+    if (phone) filter.phone = { $regex: phone.trim(), $options: "i" };
 
     const foundOwners = await Owners.find(filter);
 
     return res.status(200).json({
       message: "Пользователи найдены",
-      owners: foundOwners
+      owners: foundOwners,
     });
-
   } catch (error) {
     return res.status(500).json({
-      message: "Ошибка сервера. Попробуйте снова"
+      message: "Ошибка сервера. Попробуйте снова",
     });
   }
 });
 
-mongoose.connect(process.env.MONGO_URL)
+mongoose
+  .connect(process.env.MONGO_URL)
   .then(() => {
     console.log("Database connected");
-    app.listen(port, () => console.log(`Server running on http://localhost:${port}`));
+    app.listen(port, () =>
+      console.log(`Server running on http://localhost:${port}`)
+    );
   })
-  .catch(err => {
+  .catch((err) => {
     console.error("Database connection error:", err);
   });

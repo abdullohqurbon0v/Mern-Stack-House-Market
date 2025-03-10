@@ -1,4 +1,4 @@
-import { Calendar, Home, } from "lucide-react"
+import { Calendar, Home } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -8,9 +8,8 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from "@/components/ui/sidebar"
-import Link from "next/link"
-
+} from "@/components/ui/sidebar";
+import Link from "next/link";
 
 const items = [
   {
@@ -23,8 +22,12 @@ const items = [
     url: "/owners",
     icon: Calendar,
   },
-
-]
+  {
+    title: "Сотрудники",
+    url: "/managers",
+    icon: Calendar,
+  },
+];
 
 const AppSidebar = () => {
   return (
@@ -49,7 +52,7 @@ const AppSidebar = () => {
         </SidebarGroup>
       </SidebarContent>
     </Sidebar>
-  )
-}
+  );
+};
 
-export default AppSidebar
+export default AppSidebar;
